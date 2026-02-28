@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identity Manager Dashboard</title>
+    
+    <!-- AWS Amazon Ember Font -->
+    <link rel="preconnect" href="https://d1tzzh0q3mh5bp.cloudfront.net">
+    <link href="https://d1tzzh0q3mh5bp.cloudfront.net/fonts/amazon-ember/amazon-ember.css" rel="stylesheet">
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+    <!-- Connection Status Indicator -->
+    <div id="connection-status" class="connection-status disconnected">
+        🔴 Disconnected from API
+    </div>
+
+    <div class="header">
+        <h1>Identity Manager Dashboard</h1>
+        <p>Manage users, tokens, and inference profiles</p>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <div class="container">
+        <div class="tab-container">
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="showTab('users-tab')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 20px; height: 20px; margin-right: 8px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                    </svg>
+                    Users
+                </button>
+                <button class="tab-button" onclick="showTab('tokens-tab')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 20px; height: 20px; margin-right: 8px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                    </svg>
+                    Tokens
+                </button>
+                <button class="tab-button" onclick="showTab('profiles-tab')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 20px; height: 20px; margin-right: 8px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Profiles
+                </button>
+                <button class="tab-button" onclick="showTab('groups-tab')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 20px; height: 20px; margin-right: 8px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                    </svg>
+                    Groups
+                </button>
+            </div>
+            
+            <!-- Users Tab -->
+            <div id="users-tab" class="tab-content active">
+                <div class="section-header">
+                    <h2>Users Management</h2>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="action-button create" onclick="showCreateUserModal()">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 16px; height: 16px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Create User
+                        </button>
+                        <button class="refresh-button" onclick="loadUsers()" title="Refresh Data">
+                            <span class="refresh-icon">&#x21bb;</span>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- User Statistics -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div class="metric-card">
+                        <h3>Total Users</h3>
+                        <div class="metric-value" id="total-users">-</div>
+                        <div class="metric-subtitle">In Cognito</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>Active Tokens</h3>
+                        <div class="metric-value" id="active-tokens">-</div>
+                        <div class="metric-subtitle">Currently valid</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>Active Profiles</h3>
+                        <div class="metric-value" id="active-profiles">-</div>
+                        <div class="metric-subtitle">Inference profiles</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>Total Groups</h3>
+                        <div class="metric-value" id="total-groups">-</div>
+                        <div class="metric-subtitle">Cognito groups</div>
+                    </div>
+                </div>
+                
+                <!-- Users Table -->
+                <div class="card">
+                    <h2>Users List</h2>
+                    <table id="users-table">
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>Email</th>
+                                <th>Person</th>
+                                <th>Status</th>
+                                <th>Groups</th>
+                                <th>Auto-Generate</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="7">
+                                    <div class="loading-spinner"></div>
+                                    Loading users...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Tokens Tab -->
+            <div id="tokens-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>Tokens Management</h2>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="action-button create" onclick="showCreateTokenModal()">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 16px; height: 16px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Create Token
+                        </button>
+                        <button class="refresh-button" onclick="loadTokens()" title="Refresh Data">
+                            <span class="refresh-icon">&#x21bb;</span>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Tokens Table -->
+                <div class="card">
+                    <h2>Active Tokens</h2>
+                    <table id="tokens-table">
+                        <thead>
+                            <tr>
+                                <th>Token ID</th>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Profile</th>
+                                <th>Created</th>
+                                <th>Expires</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="8">
+                                    <div class="loading-spinner"></div>
+                                    Loading tokens...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Profiles Tab -->
+            <div id="profiles-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>Inference Profiles</h2>
+                    <button class="refresh-button" onclick="loadProfiles()" title="Refresh Data">
+                        <span class="refresh-icon">&#x21bb;</span>
+                        Refresh
+                    </button>
+                </div>
+                
+                <!-- Profiles Table -->
+                <div class="card">
+                    <h2>Available Profiles</h2>
+                    <table id="profiles-table">
+                        <thead>
+                            <tr>
+                                <th>Profile ID</th>
+                                <th>Profile Name</th>
+                                <th>Application</th>
+                                <th>Model</th>
+                                <th>Group</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="7">
+                                    <div class="loading-spinner"></div>
+                                    Loading profiles...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Groups Tab -->
+            <div id="groups-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>Cognito Groups</h2>
+                    <button class="refresh-button" onclick="loadGroups()" title="Refresh Data">
+                        <span class="refresh-icon">&#x21bb;</span>
+                        Refresh
+                    </button>
+                </div>
+                
+                <!-- Groups Table -->
+                <div class="card">
+                    <h2>Groups List</h2>
+                    <table id="groups-table">
+                        <thead>
+                            <tr>
+                                <th>Group Name</th>
+                                <th>Description</th>
+                                <th>Precedence</th>
+                                <th>User Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4">
+                                    <div class="loading-spinner"></div>
+                                    Loading groups...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create User Modal -->
+    <div id="create-user-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New User</h2>
+                <button class="modal-close" onclick="closeCreateUserModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="create-user-form">
+                    <div class="form-group">
+                        <label for="user-email">Email *</label>
+                        <input type="email" id="user-email" required placeholder="user@example.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="user-person">Person Name *</label>
+                        <input type="text" id="user-person" required placeholder="John Doe">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="user-group">Group *</label>
+                        <select id="user-group" required>
+                            <option value="">Select a group...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="user-password">Temporary Password (optional)</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="user-password" placeholder="Leave empty for auto-generated" minlength="8">
+                            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility()" aria-label="Toggle password visibility">
+                                <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </button>
+                        </div>
+                        <small style="color: #666; font-size: 0.85rem; margin-top: 0.25rem; display: block;">
+                            Password must be at least 8 characters and contain: uppercase, lowercase, number, and special character (!@#$%^&*_-)
+                        </small>
+                    </div>
+                    
+                    <div class="form-group checkbox">
+                        <label>
+                            <input type="checkbox" id="user-send-email" checked>
+                            Send welcome email
+                        </label>
+                    </div>
+                    
+                    <div class="form-group checkbox">
+                        <label>
+                            <input type="checkbox" id="user-auto-regenerate" checked>
+                            Enable auto-regeneration of tokens
+                        </label>
+                        <small style="color: #666; font-size: 0.85rem; margin-top: 0.25rem; display: block; margin-left: 1.5rem;">
+                            Allows the user to automatically regenerate expired tokens
+                        </small>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeCreateUserModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Create User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Token Modal -->
+    <div id="create-token-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Token</h2>
+                <button class="modal-close" onclick="closeCreateTokenModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="create-token-form">
+                    <div class="form-group">
+                        <label for="token-user">User *</label>
+                        <select id="token-user" required>
+                            <option value="">Select a user...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="token-profile">Inference Profile *</label>
+                        <select id="token-profile" required>
+                            <option value="">Select a profile...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="token-validity">Validity Period *</label>
+                        <select id="token-validity" required>
+                            <option value="1_day">1 Day</option>
+                            <option value="7_days">7 Days</option>
+                            <option value="30_days">30 Days</option>
+                            <option value="60_days">60 Days</option>
+                            <option value="90_days" selected>90 Days</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group checkbox">
+                        <label>
+                            <input type="checkbox" id="token-send-email">
+                            Send token via email
+                        </label>
+                        <small style="color: #666; font-size: 0.85rem; margin-top: 0.25rem; display: block; margin-left: 1.5rem;">
+                            The JWT token will be sent to the user's email address
+                        </small>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeCreateTokenModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Create Token</button>
+                    </div>
+                </form>
+                
+                <!-- Token Result (shown after creation) -->
+                <div id="token-result" style="display: none;">
+                    <div class="alert success">
+                        <strong>✓ Token Created Successfully!</strong>
+                    </div>
+                    <div class="token-display">
+                        <label>JWT Token:</label>
+                        <textarea id="token-jwt" readonly rows="8"></textarea>
+                        <button class="btn-copy" onclick="copyToken()">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 16px; height: 16px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                            </svg>
+                            Copy Token
+                        </button>
+                    </div>
+                    <div class="token-info">
+                        <p><strong>Token ID:</strong> <span id="token-id-display"></span></p>
+                        <p><strong>Expires:</strong> <span id="token-expires-display"></span></p>
+                        <p><strong>Validity:</strong> <span id="token-validity-display"></span> days</p>
+                    </div>
+                    <button class="btn-primary" onclick="closeCreateTokenModal(); loadTokens();">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Token Modal -->
+    <div id="view-token-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Token Details</h2>
+                <button class="modal-close" onclick="closeViewTokenModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-section">
+                    <h3 class="modal-section-title">Token Information</h3>
+                    <div class="modal-info-grid">
+                        <div class="modal-info-item">
+                            <span class="modal-label">Token ID:</span>
+                            <span class="modal-value" id="view-token-id">-</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-label">JTI:</span>
+                            <span class="modal-value" id="view-token-jti">-</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-label">User ID:</span>
+                            <span class="modal-value" id="view-token-user-id">-</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-label">Email:</span>
+                            <span class="modal-value" id="view-token-email">-</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-label">Profile:</span>
+                            <span class="modal-value" id="view-token-profile">-</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-label">Created:</span>
+                            <span class="modal-value" id="view-token-created">-</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-label">Expires:</span>
+                            <span class="modal-value" id="view-token-expires">-</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-label">Status:</span>
+                            <span class="modal-value" id="view-token-status">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard JavaScript -->
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/dashboard.js"></script>
+    
+    <script>
+        // Initialize dashboard on load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Identity Manager Dashboard loaded');
+            initDashboard();
+        });
+    </script>
+</body>
+</html>

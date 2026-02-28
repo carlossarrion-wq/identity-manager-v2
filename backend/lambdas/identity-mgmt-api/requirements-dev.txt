@@ -1,0 +1,19 @@
+# Development and Testing Requirements
+# Python 3.12
+
+# Testing frameworks
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+
+# AWS mocking
+moto[cognitoidp]==4.2.9
+
+# Code quality
+pylint==3.0.3
+black==23.12.1
+flake8==7.0.0
+
+# Type checking
+mypy==1.8.0
+types-boto3==1.0.2
