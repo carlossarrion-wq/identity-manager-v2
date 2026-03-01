@@ -666,7 +666,7 @@ class DatabaseService:
             resource_id: ID del recurso
             previous_value: Valor anterior (para updates/deletes)
             new_value: Valor nuevo (para creates/updates)
-            request_id: ID del request
+            request_id: ID del request (no usado actualmente, para compatibilidad)
             
         Returns:
             True si se registró correctamente
@@ -677,8 +677,8 @@ class DatabaseService:
                 
                 query = """
                     INSERT INTO "identity-manager-audit-tbl"
-                    (operation_type, resource_type, resource_id, previous_value, new_value, request_id)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                    (operation_type, resource_type, resource_id, previous_value, new_value)
+                    VALUES (%s, %s, %s, %s, %s)
                 """
                 
                 cursor.execute(query, (
@@ -686,10 +686,10 @@ class DatabaseService:
                     resource_type,
                     resource_id,
                     json.dumps(previous_value) if previous_value else None,
-                    json.dumps(new_value) if new_value else None,
-                    request_id
+                    json.dumps(new_value) if new_value else None
                 ))
                 
+                logger.info(f"Audit log registered: {operation_type} on {resource_type}/{resource_id}")
                 return True
         except Exception as e:
             logger.error(f"Error registrando auditoría: {e}")
