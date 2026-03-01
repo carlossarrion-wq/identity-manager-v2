@@ -23,6 +23,7 @@ from services.cognito_service import CognitoService
 from services.database_service import DatabaseService
 from services.jwt_service import JWTService
 from services.email_service import EmailService
+from services.permissions_service import PermissionsService
 from utils.validators import validate_request
 from utils.response_builder import build_response, build_error_response
 
@@ -31,11 +32,12 @@ cognito_service = None
 database_service = None
 jwt_service = None
 email_service = None
+permissions_service = None
 
 
 def initialize_services():
     """Inicializar servicios en el primer invocación (lazy loading)"""
-    global cognito_service, database_service, jwt_service, email_service
+    global cognito_service, database_service, jwt_service, email_service, permissions_service
     
     if cognito_service is None:
         cognito_service = CognitoService()
@@ -45,6 +47,8 @@ def initialize_services():
         jwt_service = JWTService()
     if email_service is None:
         email_service = EmailService()
+    if permissions_service is None:
+        permissions_service = PermissionsService()
 
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -137,6 +141,7 @@ def route_operation(operation: str, body: Dict[str, Any], request_id: str) -> Di
         'create_token': handle_create_token,
         'validate_token': handle_validate_token,
         'revoke_token': handle_revoke_token,
+        'restore_token': handle_restore_token,
         'delete_token': handle_delete_token,
         
         # Operaciones de perfiles
@@ -145,6 +150,17 @@ def route_operation(operation: str, body: Dict[str, Any], request_id: str) -> Di
         # Operaciones de grupos
         'list_groups': handle_list_groups,
         
+        # Operaciones de permisos
+        'assign_app_permission': handle_assign_app_permission,
+        'assign_module_permission': handle_assign_module_permission,
+        'revoke_app_permission': handle_revoke_app_permission,
+        'revoke_module_permission': handle_revoke_module_permission,
+        'get_user_permissions': handle_get_user_permissions,
+        'list_all_permissions': handle_list_all_permissions,
+        'list_permission_types': handle_list_permission_types,
+        'list_applications': handle_list_applications,
+        'list_modules': handle_list_modules,
+
         # Operaciones de configuración
         'get_config': handle_get_config,
     }
@@ -488,6 +504,31 @@ def handle_revoke_token(body: Dict[str, Any], request_id: str) -> Dict[str, Any]
     }
 
 
+def handle_restore_token(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Restaurar token revocado"""
+    logger.info(f"[{request_id}] Restaurando token")
+    
+    token_id = body.get('token_id')
+    
+    # Restaurar en BD
+    result = database_service.restore_token(token_id)
+    
+    # Registrar en auditoría
+    database_service.log_audit(
+        operation_type='RESTORE_TOKEN',
+        resource_type='jwt_token',
+        resource_id=token_id,
+        new_value={'revoked': False, 'restored': True},
+        request_id=request_id
+    )
+    
+    return {
+        'success': True,
+        'token': result,
+        'message': 'Token restored successfully'
+    }
+
+
 def handle_delete_token(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
     """Eliminar token permanentemente"""
     logger.info(f"[{request_id}] Eliminando token")
@@ -550,4 +591,165 @@ def handle_get_config(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
     result = database_service.get_config()
     
     logger.info(f"[{request_id}] Configuración obtenida exitosamente")
+    return result
+
+
+# ============================================================================
+# HANDLERS DE OPERACIONES - PERMISOS
+# ============================================================================
+
+def handle_assign_app_permission(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Asignar permiso de aplicación a un usuario"""
+    logger.info(f"[{request_id}] Asignando permiso de aplicación")
+    
+    data = body.get('data', {})
+    user_id = data['user_id']
+    user_email = data['user_email']
+    app_id = data['application_id']
+    permission_type_id = data['permission_type_id']
+    duration_days = data.get('duration_days')
+    
+    # Asignar permiso
+    result = permissions_service.assign_app_permission(
+        user_id=user_id,
+        user_email=user_email,
+        app_id=app_id,
+        permission_type_id=permission_type_id,
+        duration_days=duration_days
+    )
+    
+    # Registrar en auditoría
+    database_service.log_audit(
+        operation_type='ASSIGN_APP_PERMISSION',
+        resource_type='app_permission',
+        resource_id=result['permission']['permission_id'],
+        new_value=result['permission'],
+        request_id=request_id
+    )
+    
+    return result
+
+
+def handle_assign_module_permission(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Asignar permiso de módulo a un usuario"""
+    logger.info(f"[{request_id}] Asignando permiso de módulo")
+    
+    data = body.get('data', {})
+    user_id = data['user_id']
+    user_email = data['user_email']
+    module_id = data['module_id']
+    permission_type_id = data['permission_type_id']
+    duration_days = data.get('duration_days')
+    
+    # Asignar permiso
+    result = permissions_service.assign_module_permission(
+        user_id=user_id,
+        user_email=user_email,
+        module_id=module_id,
+        permission_type_id=permission_type_id,
+        duration_days=duration_days
+    )
+    
+    # Registrar en auditoría
+    database_service.log_audit(
+        operation_type='ASSIGN_MODULE_PERMISSION',
+        resource_type='module_permission',
+        resource_id=result['permission']['permission_id'],
+        new_value=result['permission'],
+        request_id=request_id
+    )
+    
+    return result
+
+
+def handle_revoke_app_permission(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Revocar permiso de aplicación"""
+    logger.info(f"[{request_id}] Revocando permiso de aplicación")
+    
+    user_id = body.get('user_id')
+    app_id = body.get('application_id')
+    
+    # Revocar permiso
+    result = permissions_service.revoke_app_permission(user_id, app_id)
+    
+    # Registrar en auditoría
+    database_service.log_audit(
+        operation_type='REVOKE_APP_PERMISSION',
+        resource_type='app_permission',
+        resource_id=result['permission_id'],
+        new_value={'revoked': True},
+        request_id=request_id
+    )
+    
+    return result
+
+
+def handle_revoke_module_permission(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Revocar permiso de módulo"""
+    logger.info(f"[{request_id}] Revocando permiso de módulo")
+    
+    user_id = body.get('user_id')
+    module_id = body.get('module_id')
+    
+    # Revocar permiso
+    result = permissions_service.revoke_module_permission(user_id, module_id)
+    
+    # Registrar en auditoría
+    database_service.log_audit(
+        operation_type='REVOKE_MODULE_PERMISSION',
+        resource_type='module_permission',
+        resource_id=result['permission_id'],
+        new_value={'revoked': True},
+        request_id=request_id
+    )
+    
+    return result
+
+
+def handle_get_user_permissions(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Obtener permisos de un usuario"""
+    logger.info(f"[{request_id}] Obteniendo permisos de usuario")
+    
+    user_id = body.get('user_id')
+    
+    result = permissions_service.get_user_permissions(user_id)
+    
+    return result
+
+
+def handle_list_all_permissions(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Listar todos los permisos del sistema"""
+    logger.info(f"[{request_id}] Listando todos los permisos")
+    
+    result = permissions_service.list_all_permissions()
+    
+    return result
+
+
+def handle_list_permission_types(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Listar tipos de permisos"""
+    logger.info(f"[{request_id}] Listando tipos de permisos")
+    
+    result = permissions_service.list_permission_types()
+    
+    return result
+
+
+def handle_list_applications(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Listar aplicaciones"""
+    logger.info(f"[{request_id}] Listando aplicaciones")
+    
+    result = permissions_service.list_applications()
+    
+    return result
+
+
+def handle_list_modules(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Listar módulos"""
+    logger.info(f"[{request_id}] Listando módulos")
+    
+    app_id = body.get('application_id')
+    
+    result = permissions_service.list_modules(app_id)
+    
     return result

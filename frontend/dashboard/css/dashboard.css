@@ -1273,6 +1273,11 @@ table td:nth-child(n+4) {
     color: #c53030;
 }
 
+.status-badge.status-expired {
+    background: rgba(237, 137, 54, 0.1);
+    color: #c05621;
+}
+
 /* Form Styles */
 .form-group {
     margin-bottom: 1.5rem;

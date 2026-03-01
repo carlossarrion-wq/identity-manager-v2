@@ -55,6 +55,12 @@
                     </svg>
                     Groups
                 </button>
+                <button class="tab-button" onclick="showTab('permissions-tab')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 20px; height: 20px; margin-right: 8px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                    </svg>
+                    Permissions
+                </button>
             </div>
             
             <!-- Users Tab -->
@@ -240,6 +246,84 @@
                                 <td colspan="4">
                                     <div class="loading-spinner"></div>
                                     Loading groups...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Permissions Tab -->
+            <div id="permissions-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>Permissions Management</h2>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="action-button create" onclick="showAssignPermissionModal()">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 16px; height: 16px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Assign Permission
+                        </button>
+                        <button class="refresh-button" onclick="loadAllPermissions()" title="Refresh Data">
+                            <span class="refresh-icon">&#x21bb;</span>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Search and Filter Section -->
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <h3>Search Permissions</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 1rem; align-items: end;">
+                        <div class="form-group" style="margin: 0;">
+                            <label for="permission-search-user">User ID / Email</label>
+                            <input type="text" id="permission-search-user" placeholder="Search by user...">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label for="permission-filter-scope">Scope</label>
+                            <select id="permission-filter-scope">
+                                <option value="">All Scopes</option>
+                                <option value="application">Application</option>
+                                <option value="module">Module</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label for="permission-filter-status">Status</label>
+                            <select id="permission-filter-status">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="expired">Expired</option>
+                            </select>
+                        </div>
+                        <button class="btn-primary" onclick="searchUserPermissions()" style="height: 38px;">
+                            Search
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Permissions Table -->
+                <div class="card">
+                    <h2>All Permissions</h2>
+                    <table id="permissions-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Scope</th>
+                                <th>Resource</th>
+                                <th>Permission Type</th>
+                                <th>Level</th>
+                                <th>Granted</th>
+                                <th>Expires</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="10">
+                                    <div class="loading-spinner"></div>
+                                    Loading permissions...
                                 </td>
                             </tr>
                         </tbody>
@@ -442,10 +526,90 @@
         </div>
     </div>
 
+    <!-- Assign Permission Modal -->
+    <div id="assign-permission-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Assign Permission</h2>
+                <button class="modal-close" onclick="closeAssignPermissionModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="assign-permission-form">
+                    <div class="form-group">
+                        <label for="perm-user">User *</label>
+                        <select id="perm-user" required>
+                            <option value="">Select a user...</option>
+                        </select>
+                        <small style="color: #666; font-size: 0.85rem; margin-top: 0.25rem; display: block;">
+                            Select the user to assign the permission to
+                        </small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="perm-scope">Permission Scope *</label>
+                        <select id="perm-scope" required onchange="updatePermissionForm()">
+                            <option value="">Select scope...</option>
+                            <option value="application">Application</option>
+                            <option value="module">Module</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Application Permission Fields -->
+                    <div id="app-permission-fields" style="display: none;">
+                        <div class="form-group">
+                            <label for="perm-application">Application *</label>
+                            <select id="perm-application" required>
+                                <option value="">Select application...</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Module Permission Fields -->
+                    <div id="module-permission-fields" style="display: none;">
+                        <div class="form-group">
+                            <label for="perm-module">Module *</label>
+                            <select id="perm-module" required>
+                                <option value="">Select module...</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="perm-type">Permission Type *</label>
+                        <select id="perm-type" required>
+                            <option value="">Select permission type...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="perm-duration">Duration</label>
+                        <select id="perm-duration">
+                            <option value="">Indefinite</option>
+                            <option value="1">1 Day</option>
+                            <option value="7">7 Days</option>
+                            <option value="30" selected>30 Days</option>
+                            <option value="60">60 Days</option>
+                            <option value="90">90 Days</option>
+                        </select>
+                        <small style="color: #666; font-size: 0.85rem; margin-top: 0.25rem; display: block;">
+                            Leave as "Indefinite" for permanent permissions
+                        </small>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeAssignPermissionModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Assign Permission</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Dashboard JavaScript -->
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script src="js/dashboard.js"></script>
+    <script src="js/permissions.js"></script>
     
     <script>
         // Initialize dashboard on load

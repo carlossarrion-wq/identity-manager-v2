@@ -55,6 +55,11 @@ async function loadDashboardData() {
             case 'groups-tab':
                 await loadGroups();
                 break;
+            case 'permissions-tab':
+                if (typeof loadAllPermissions === 'function') {
+                    await loadAllPermissions();
+                }
+                break;
         }
         
         // Load statistics
@@ -301,7 +306,7 @@ function renderTokensTable(tokens) {
             <td>${token.profile_name || '-'}</td>
             <td>${formatDate(token.created_at)}</td>
             <td>${formatDate(token.expires_at)}</td>
-            <td><span class="status-badge status-${token.is_revoked ? 'revoked' : 'active'}">${token.is_revoked ? 'Revoked' : 'Active'}</span></td>
+            <td><span class="status-badge status-${token.status}">${token.status.charAt(0).toUpperCase() + token.status.slice(1)}</span></td>
             <td>
                 <button class="btn-action btn-info" onclick="viewToken('${token.token_id}')" title="View Details">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 16px; height: 16px;">
@@ -309,13 +314,19 @@ function renderTokensTable(tokens) {
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                 </button>
-                ${!token.is_revoked ? `
+                ${token.status === 'revoked' ? `
+                <button class="btn-action btn-info" onclick="confirmRestoreToken('${token.token_id}')" title="Restore Token">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 16px; height: 16px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                    </svg>
+                </button>
+                ` : `
                 <button class="btn-action btn-warning" onclick="confirmRevokeToken('${token.token_id}')" title="Revoke Token">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 16px; height: 16px;">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                     </svg>
                 </button>
-                ` : ''}
+                `}
             </td>
         </tr>
     `).join('');
@@ -407,7 +418,7 @@ function viewToken(tokenId) {
     document.getElementById('view-token-profile').textContent = token.profile_name || '-';
     document.getElementById('view-token-created').textContent = formatDate(token.created_at);
     document.getElementById('view-token-expires').textContent = formatDate(token.expires_at);
-    document.getElementById('view-token-status').innerHTML = `<span class="status-badge status-${token.is_revoked ? 'revoked' : 'active'}">${token.is_revoked ? 'Revoked' : 'Active'}</span>`;
+    document.getElementById('view-token-status').innerHTML = `<span class="status-badge status-${token.status}">${token.status.charAt(0).toUpperCase() + token.status.slice(1)}</span>`;
     
     document.getElementById('view-token-modal').classList.add('show');
 }
@@ -417,7 +428,7 @@ function closeViewTokenModal() {
 }
 
 function confirmRevokeToken(tokenId) {
-    if (confirm('Are you sure you want to revoke this token?\n\nThis action cannot be undone.')) {
+    if (confirm('Are you sure you want to revoke this token?')) {
         revokeToken(tokenId);
     }
 }
@@ -430,6 +441,23 @@ async function revokeToken(tokenId) {
         loadStatistics();
     } catch (error) {
         showAlert('error', `Error revoking token: ${error.message}`);
+    }
+}
+
+function confirmRestoreToken(tokenId) {
+    if (confirm('Are you sure you want to restore this token?\n\nThis will reactivate the token.')) {
+        restoreToken(tokenId);
+    }
+}
+
+async function restoreToken(tokenId) {
+    try {
+        await api.request('restore_token', { token_id: tokenId });
+        showAlert('success', 'Token restored successfully!');
+        loadTokens();
+        loadStatistics();
+    } catch (error) {
+        showAlert('error', `Error restoring token: ${error.message}`);
     }
 }
 

@@ -363,6 +363,42 @@ class DatabaseService:
                 'reason': reason
             }
     
+    def restore_token(self, token_id: str) -> Dict[str, Any]:
+        """
+        Restaurar un token revocado (quitar la revocación)
+        
+        Args:
+            token_id: ID del token
+            
+        Returns:
+            Dict con información del token restaurado
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            
+            query = """
+                UPDATE "identity-manager-tokens-tbl"
+                SET is_revoked = FALSE,
+                    revoked_at = NULL,
+                    revocation_reason = NULL
+                WHERE id = %s
+                RETURNING id, jti, cognito_user_id, expires_at
+            """
+            
+            cursor.execute(query, (token_id,))
+            result = cursor.fetchone()
+            
+            if not result:
+                raise ValueError(f'Token no encontrado: {token_id}')
+            
+            return {
+                'token_id': str(result['id']),
+                'jti': result['jti'],
+                'user_id': result['cognito_user_id'],
+                'expires_at': result['expires_at'].isoformat() if result['expires_at'] else None,
+                'message': 'Token restored successfully'
+            }
+    
     def delete_token(self, token_id: str) -> bool:
         """
         Eliminar token permanentemente
