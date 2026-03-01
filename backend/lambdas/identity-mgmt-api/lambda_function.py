@@ -233,6 +233,8 @@ def handle_create_user(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
         operation_type='CREATE_USER',
         resource_type='cognito_user',
         resource_id=result['user']['user_id'],
+        cognito_user_id=result['user']['user_id'],
+        cognito_email=result['user']['email'],
         new_value=result['user'],
         request_id=request_id
     )
@@ -260,6 +262,8 @@ def handle_delete_user(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
         operation_type='DELETE_USER',
         resource_type='cognito_user',
         resource_id=user_id,
+        cognito_user_id=user_id,
+        cognito_email=user_info.get('email'),
         previous_value=user_info,
         request_id=request_id
     )
@@ -350,6 +354,8 @@ def handle_create_token(body: Dict[str, Any], request_id: str) -> Dict[str, Any]
         operation_type='CREATE_TOKEN',
         resource_type='jwt_token',
         resource_id=token_record['token_id'],
+        cognito_user_id=user_id,
+        cognito_email=email,
         new_value={'jti': token_data['jti'], 'user_id': user_id},
         request_id=request_id
     )
@@ -493,6 +499,8 @@ def handle_revoke_token(body: Dict[str, Any], request_id: str) -> Dict[str, Any]
         operation_type='REVOKE_TOKEN',
         resource_type='jwt_token',
         resource_id=token_id,
+        cognito_user_id=token_info.get('cognito_user_id'),
+        cognito_email=token_info.get('cognito_email'),
         new_value={'revoked': True, 'reason': reason},
         request_id=request_id
     )
@@ -518,6 +526,8 @@ def handle_restore_token(body: Dict[str, Any], request_id: str) -> Dict[str, Any
         operation_type='RESTORE_TOKEN',
         resource_type='jwt_token',
         resource_id=token_id,
+        cognito_user_id=token_info.get('cognito_user_id'),
+        cognito_email=token_info.get('cognito_email'),
         new_value={'revoked': False, 'restored': True},
         request_id=request_id
     )
@@ -546,6 +556,8 @@ def handle_delete_token(body: Dict[str, Any], request_id: str) -> Dict[str, Any]
         operation_type='DELETE_TOKEN',
         resource_type='jwt_token',
         resource_id=token_id,
+        cognito_user_id=token_info.get('cognito_user_id'),
+        cognito_email=token_info.get('cognito_email'),
         previous_value=token_info,
         request_id=request_id
     )
@@ -623,6 +635,8 @@ def handle_assign_app_permission(body: Dict[str, Any], request_id: str) -> Dict[
         operation_type='ASSIGN_APP_PERMISSION',
         resource_type='app_permission',
         resource_id=result['permission']['permission_id'],
+        cognito_user_id=user_id,
+        cognito_email=user_email,
         new_value=result['permission'],
         request_id=request_id
     )
@@ -655,6 +669,8 @@ def handle_assign_module_permission(body: Dict[str, Any], request_id: str) -> Di
         operation_type='ASSIGN_MODULE_PERMISSION',
         resource_type='module_permission',
         resource_id=result['permission']['permission_id'],
+        cognito_user_id=user_id,
+        cognito_email=user_email,
         new_value=result['permission'],
         request_id=request_id
     )
@@ -677,6 +693,8 @@ def handle_revoke_app_permission(body: Dict[str, Any], request_id: str) -> Dict[
         operation_type='REVOKE_APP_PERMISSION',
         resource_type='app_permission',
         resource_id=result['permission_id'],
+        cognito_user_id=user_id,
+        cognito_email=None,  # No disponible en este contexto
         new_value={'revoked': True},
         request_id=request_id
     )
@@ -699,6 +717,8 @@ def handle_revoke_module_permission(body: Dict[str, Any], request_id: str) -> Di
         operation_type='REVOKE_MODULE_PERMISSION',
         resource_type='module_permission',
         resource_id=result['permission_id'],
+        cognito_user_id=user_id,
+        cognito_email=None,  # No disponible en este contexto
         new_value={'revoked': True},
         request_id=request_id
     )
