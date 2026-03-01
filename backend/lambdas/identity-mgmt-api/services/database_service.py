@@ -685,14 +685,27 @@ class DatabaseService:
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """
                 
+                # Convertir datetime a string para serialización JSON
+                def serialize_value(value):
+                    if value is None:
+                        return None
+                    # Crear una copia para no modificar el original
+                    serialized = {}
+                    for key, val in value.items():
+                        if isinstance(val, datetime):
+                            serialized[key] = val.isoformat()
+                        else:
+                            serialized[key] = val
+                    return json.dumps(serialized)
+                
                 cursor.execute(query, (
                     operation_type,
                     resource_type,
                     resource_id,
                     cognito_user_id,
                     cognito_email,
-                    json.dumps(previous_value) if previous_value else None,
-                    json.dumps(new_value) if new_value else None
+                    serialize_value(previous_value),
+                    serialize_value(new_value)
                 ))
                 
                 logger.info(f"Audit log registered: {operation_type} on {resource_type}/{resource_id} by {cognito_email or cognito_user_id or 'system'}")
