@@ -636,9 +636,13 @@ def handle_assign_app_permission(body: Dict[str, Any], request_id: str) -> Dict[
         duration_days=duration_days
     )
     
+    # Determinar tipo de operación según el action devuelto
+    # Si action es 'updated' y el permiso estaba revocado, es una restauración
+    operation_type = 'RESTORE_APP_PERMISSION' if result['action'] == 'updated' else 'ASSIGN_APP_PERMISSION'
+    
     # Registrar en auditoría
     database_service.log_audit(
-        operation_type='ASSIGN_APP_PERMISSION',
+        operation_type=operation_type,
         resource_type='app_permission',
         resource_id=result['permission']['permission_id'],
         cognito_user_id=user_id,
@@ -670,9 +674,13 @@ def handle_assign_module_permission(body: Dict[str, Any], request_id: str) -> Di
         duration_days=duration_days
     )
     
+    # Determinar tipo de operación según el action devuelto
+    # Si action es 'updated' y el permiso estaba revocado, es una restauración
+    operation_type = 'RESTORE_MODULE_PERMISSION' if result['action'] == 'updated' else 'ASSIGN_MODULE_PERMISSION'
+    
     # Registrar en auditoría
     database_service.log_audit(
-        operation_type='ASSIGN_MODULE_PERMISSION',
+        operation_type=operation_type,
         resource_type='module_permission',
         resource_id=result['permission']['permission_id'],
         cognito_user_id=user_id,
