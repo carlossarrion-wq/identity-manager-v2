@@ -653,6 +653,8 @@ class DatabaseService:
         operation_type: str,
         resource_type: str,
         resource_id: str,
+        cognito_user_id: Optional[str] = None,
+        cognito_email: Optional[str] = None,
         previous_value: Optional[Dict] = None,
         new_value: Optional[Dict] = None,
         request_id: Optional[str] = None
@@ -664,6 +666,8 @@ class DatabaseService:
             operation_type: Tipo de operación (CREATE, UPDATE, DELETE, etc.)
             resource_type: Tipo de recurso afectado
             resource_id: ID del recurso
+            cognito_user_id: ID del usuario que realiza la operación
+            cognito_email: Email del usuario que realiza la operación
             previous_value: Valor anterior (para updates/deletes)
             new_value: Valor nuevo (para creates/updates)
             request_id: ID del request (no usado actualmente, para compatibilidad)
@@ -677,19 +681,21 @@ class DatabaseService:
                 
                 query = """
                     INSERT INTO "identity-manager-audit-tbl"
-                    (operation_type, resource_type, resource_id, previous_value, new_value)
-                    VALUES (%s, %s, %s, %s, %s)
+                    (operation_type, resource_type, resource_id, cognito_user_id, cognito_email, previous_value, new_value)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """
                 
                 cursor.execute(query, (
                     operation_type,
                     resource_type,
                     resource_id,
+                    cognito_user_id,
+                    cognito_email,
                     json.dumps(previous_value) if previous_value else None,
                     json.dumps(new_value) if new_value else None
                 ))
                 
-                logger.info(f"Audit log registered: {operation_type} on {resource_type}/{resource_id}")
+                logger.info(f"Audit log registered: {operation_type} on {resource_type}/{resource_id} by {cognito_email or cognito_user_id or 'system'}")
                 return True
         except Exception as e:
             logger.error(f"Error registrando auditoría: {e}")
