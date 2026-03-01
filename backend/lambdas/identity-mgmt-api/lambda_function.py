@@ -699,6 +699,16 @@ def handle_revoke_app_permission(body: Dict[str, Any], request_id: str) -> Dict[
     user_id = body.get('user_id')
     app_id = body.get('application_id')
     
+    # Obtener permisos del usuario para extraer el email
+    user_permissions = permissions_service.get_user_permissions(user_id)
+    user_email = None
+    if user_permissions and user_permissions.get('permissions'):
+        # Buscar el email en cualquier permiso del usuario
+        for perm in user_permissions['permissions']:
+            if perm.get('email'):
+                user_email = perm['email']
+                break
+    
     # Revocar permiso
     result = permissions_service.revoke_app_permission(user_id, app_id)
     
@@ -708,7 +718,7 @@ def handle_revoke_app_permission(body: Dict[str, Any], request_id: str) -> Dict[
         resource_type='app_permission',
         resource_id=result['permission_id'],
         cognito_user_id=user_id,
-        cognito_email=None,  # No disponible en este contexto
+        cognito_email=user_email,
         new_value={'revoked': True},
         request_id=request_id
     )
@@ -723,6 +733,16 @@ def handle_revoke_module_permission(body: Dict[str, Any], request_id: str) -> Di
     user_id = body.get('user_id')
     module_id = body.get('module_id')
     
+    # Obtener permisos del usuario para extraer el email
+    user_permissions = permissions_service.get_user_permissions(user_id)
+    user_email = None
+    if user_permissions and user_permissions.get('permissions'):
+        # Buscar el email en cualquier permiso del usuario
+        for perm in user_permissions['permissions']:
+            if perm.get('email'):
+                user_email = perm['email']
+                break
+    
     # Revocar permiso
     result = permissions_service.revoke_module_permission(user_id, module_id)
     
@@ -732,7 +752,7 @@ def handle_revoke_module_permission(body: Dict[str, Any], request_id: str) -> Di
         resource_type='module_permission',
         resource_id=result['permission_id'],
         cognito_user_id=user_id,
-        cognito_email=None,  # No disponible en este contexto
+        cognito_email=user_email,
         new_value={'revoked': True},
         request_id=request_id
     )
