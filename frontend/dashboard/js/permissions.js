@@ -474,6 +474,20 @@ async function restorePermission(permissionId, scope, userId, resourceId) {
             return;
         }
         
+        // Calculate duration_days from original expiration date
+        let durationDays = null;
+        if (permission.expires_at) {
+            const now = new Date();
+            const expiresAt = new Date(permission.expires_at);
+            const grantedAt = new Date(permission.granted_at);
+            
+            // Calculate original duration in days
+            const originalDurationMs = expiresAt - grantedAt;
+            durationDays = Math.ceil(originalDurationMs / (1000 * 60 * 60 * 24));
+            
+            console.log(`Restoring permission with original duration: ${durationDays} days`);
+        }
+        
         // Restoring is the same as assigning again - it will reactivate the permission
         let operation, data;
         
@@ -485,7 +499,7 @@ async function restorePermission(permissionId, scope, userId, resourceId) {
                     user_email: permission.email || '',
                     application_id: resourceId,
                     permission_type_id: permissionTypeId,
-                    duration_days: null // Keep indefinite
+                    duration_days: durationDays
                 }
             };
         } else if (scope === 'module') {
@@ -496,7 +510,7 @@ async function restorePermission(permissionId, scope, userId, resourceId) {
                     user_email: permission.email || '',
                     module_id: resourceId,
                     permission_type_id: permissionTypeId,
-                    duration_days: null // Keep indefinite
+                    duration_days: durationDays
                 }
             };
         } else {
@@ -505,7 +519,7 @@ async function restorePermission(permissionId, scope, userId, resourceId) {
         }
         
         await api.request(operation, data);
-        showAlert('success', 'Permission restored successfully');
+        showAlert('success', 'Permission restored successfully with original expiration date');
         loadAllPermissions();
     } catch (error) {
         console.error('Error restoring permission:', error);
