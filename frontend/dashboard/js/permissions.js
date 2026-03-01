@@ -474,21 +474,8 @@ async function restorePermission(permissionId, scope, userId, resourceId) {
             return;
         }
         
-        // Calculate duration_days from original expiration date
-        let durationDays = null;
-        if (permission.expires_at) {
-            const now = new Date();
-            const expiresAt = new Date(permission.expires_at);
-            const grantedAt = new Date(permission.granted_at);
-            
-            // Calculate original duration in days
-            const originalDurationMs = expiresAt - grantedAt;
-            durationDays = Math.ceil(originalDurationMs / (1000 * 60 * 60 * 24));
-            
-            console.log(`Restoring permission with original duration: ${durationDays} days`);
-        }
-        
-        // Restoring is the same as assigning again - it will reactivate the permission
+        // Restaurar es simplemente reasignar el permiso
+        // El backend detectará que is_active=FALSE y solo lo activará sin cambiar fechas
         let operation, data;
         
         if (scope === 'application') {
@@ -498,8 +485,8 @@ async function restorePermission(permissionId, scope, userId, resourceId) {
                     user_id: userId,
                     user_email: permission.email || '',
                     application_id: resourceId,
-                    permission_type_id: permissionTypeId,
-                    duration_days: durationDays
+                    permission_type_id: permissionTypeId
+                    // NO enviar duration_days - el backend mantendrá las fechas originales
                 }
             };
         } else if (scope === 'module') {
@@ -509,8 +496,8 @@ async function restorePermission(permissionId, scope, userId, resourceId) {
                     user_id: userId,
                     user_email: permission.email || '',
                     module_id: resourceId,
-                    permission_type_id: permissionTypeId,
-                    duration_days: durationDays
+                    permission_type_id: permissionTypeId
+                    // NO enviar duration_days - el backend mantendrá las fechas originales
                 }
             };
         } else {
@@ -519,7 +506,7 @@ async function restorePermission(permissionId, scope, userId, resourceId) {
         }
         
         await api.request(operation, data);
-        showAlert('success', 'Permission restored successfully with original expiration date');
+        showAlert('success', 'Permission restored successfully');
         loadAllPermissions();
     } catch (error) {
         console.error('Error restoring permission:', error);

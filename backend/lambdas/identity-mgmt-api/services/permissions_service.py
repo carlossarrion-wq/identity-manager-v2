@@ -69,16 +69,28 @@ class PermissionsService:
             
             if existing:
                 # Actualizar permiso existente
-                update_query = """
-                    UPDATE "identity-manager-app-permissions-tbl"
-                    SET permission_type_id = %s,
-                        expires_at = %s,
-                        is_active = TRUE,
-                        granted_at = CURRENT_TIMESTAMP
-                    WHERE id = %s
-                    RETURNING id, granted_at
-                """
-                cursor.execute(update_query, (permission_type_id, expires_at, existing['id']))
+                # Si el permiso estaba revocado (is_active=FALSE), solo reactivarlo sin cambiar fechas
+                # Si estaba activo, actualizar todo
+                if not existing['is_active']:
+                    # Restaurar: solo cambiar is_active a TRUE, mantener fechas originales
+                    update_query = """
+                        UPDATE "identity-manager-app-permissions-tbl"
+                        SET is_active = TRUE
+                        WHERE id = %s
+                        RETURNING id, granted_at
+                    """
+                    cursor.execute(update_query, (existing['id'],))
+                else:
+                    # Actualizar permiso activo: cambiar tipo y fechas
+                    update_query = """
+                        UPDATE "identity-manager-app-permissions-tbl"
+                        SET permission_type_id = %s,
+                            expires_at = %s,
+                            granted_at = CURRENT_TIMESTAMP
+                        WHERE id = %s
+                        RETURNING id, granted_at
+                    """
+                    cursor.execute(update_query, (permission_type_id, expires_at, existing['id']))
                 result = cursor.fetchone()
                 action = 'updated'
             else:
@@ -145,16 +157,28 @@ class PermissionsService:
             
             if existing:
                 # Actualizar permiso existente
-                update_query = """
-                    UPDATE "identity-manager-module-permissions-tbl"
-                    SET permission_type_id = %s,
-                        expires_at = %s,
-                        is_active = TRUE,
-                        granted_at = CURRENT_TIMESTAMP
-                    WHERE id = %s
-                    RETURNING id, granted_at
-                """
-                cursor.execute(update_query, (permission_type_id, expires_at, existing['id']))
+                # Si el permiso estaba revocado (is_active=FALSE), solo reactivarlo sin cambiar fechas
+                # Si estaba activo, actualizar todo
+                if not existing['is_active']:
+                    # Restaurar: solo cambiar is_active a TRUE, mantener fechas originales
+                    update_query = """
+                        UPDATE "identity-manager-module-permissions-tbl"
+                        SET is_active = TRUE
+                        WHERE id = %s
+                        RETURNING id, granted_at
+                    """
+                    cursor.execute(update_query, (existing['id'],))
+                else:
+                    # Actualizar permiso activo: cambiar tipo y fechas
+                    update_query = """
+                        UPDATE "identity-manager-module-permissions-tbl"
+                        SET permission_type_id = %s,
+                            expires_at = %s,
+                            granted_at = CURRENT_TIMESTAMP
+                        WHERE id = %s
+                        RETURNING id, granted_at
+                    """
+                    cursor.execute(update_query, (permission_type_id, expires_at, existing['id']))
                 result = cursor.fetchone()
                 action = 'updated'
             else:
