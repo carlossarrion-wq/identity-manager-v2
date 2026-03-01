@@ -355,7 +355,7 @@ def handle_create_token(body: Dict[str, Any], request_id: str) -> Dict[str, Any]
         resource_type='jwt_token',
         resource_id=token_record['token_id'],
         cognito_user_id=user_id,
-        cognito_email=email,
+        cognito_email=user_info['email'],
         new_value={'jti': token_data['jti'], 'user_id': user_id},
         request_id=request_id
     )
@@ -487,13 +487,16 @@ def handle_validate_token(body: Dict[str, Any], request_id: str) -> Dict[str, An
 def handle_revoke_token(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
     """Revocar token JWT"""
     logger.info(f"[{request_id}] Revocando token")
-    
+
     token_id = body.get('token_id')
     reason = body.get('reason', 'No especificada')
-    
+
+    # Obtener info del token ANTES de revocarlo (para auditoría)
+    token_info = database_service.get_token(token_id)
+
     # Revocar en BD
     result = database_service.revoke_token(token_id, reason)
-    
+
     # Registrar en auditoría
     database_service.log_audit(
         operation_type='REVOKE_TOKEN',
@@ -517,6 +520,9 @@ def handle_restore_token(body: Dict[str, Any], request_id: str) -> Dict[str, Any
     logger.info(f"[{request_id}] Restaurando token")
     
     token_id = body.get('token_id')
+    
+    # Obtener info del token ANTES de restaurarlo (para auditoría)
+    token_info = database_service.get_token(token_id)
     
     # Restaurar en BD
     result = database_service.restore_token(token_id)
