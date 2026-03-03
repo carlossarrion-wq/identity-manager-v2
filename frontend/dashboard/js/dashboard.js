@@ -782,7 +782,24 @@ function renderTokensPaginatedTable() {
         return;
     }
     
-    tbody.innerHTML = pageData.map(token => `
+    tbody.innerHTML = pageData.map(token => {
+        // Determinar si el token fue regenerado o es una regeneración
+        const isRegenerated = token.regenerated_at != null; // Token viejo que fue regenerado
+        const isRegeneratedFrom = token.regenerated_from_jti != null; // Token nuevo que reemplazó a otro
+        
+        let statusBadge = `<span class="status-badge status-${token.status}">${token.status.charAt(0).toUpperCase() + token.status.slice(1)}</span>`;
+        
+        // Añadir badge adicional si fue regenerado
+        if (isRegenerated) {
+            statusBadge += ' <span class="status-badge" style="background-color: #6c757d; font-size: 0.75em;" title="This token was regenerated on ' + formatDate(token.regenerated_at) + '">🔄 Regenerated</span>';
+        }
+        
+        // Añadir badge si es una regeneración de otro token
+        if (isRegeneratedFrom) {
+            statusBadge += ' <span class="status-badge" style="background-color: #17a2b8; font-size: 0.75em;" title="Auto-generated from expired token">✨ Auto-generated</span>';
+        }
+        
+        return `
         <tr>
             <td><code>${token.token_id ? token.token_id.substring(0, 8) + '...' : '-'}</code></td>
             <td><code>${token.user_id ? token.user_id.substring(0, 8) + '...' : '-'}</code></td>
@@ -790,7 +807,7 @@ function renderTokensPaginatedTable() {
             <td>${token.profile_name || '-'}</td>
             <td>${formatDate(token.created_at)}</td>
             <td>${formatDate(token.expires_at)}</td>
-            <td><span class="status-badge status-${token.status}">${token.status.charAt(0).toUpperCase() + token.status.slice(1)}</span></td>
+            <td>${statusBadge}</td>
             <td>
                 <button class="btn-action btn-info" onclick="viewToken('${token.token_id}')" title="View Details">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 16px; height: 16px;">
