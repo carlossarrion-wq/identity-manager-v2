@@ -10,6 +10,14 @@ let totalUsers = 0;
 let usageData = [];
 let charts = {};
 
+// Usage pagination state
+let usagePagination = {
+    currentPage: 1,
+    pageSize: 10,
+    filteredData: [],
+    allData: []
+};
+
 // Date range state
 let dateRange = {
     start: null,
@@ -220,10 +228,17 @@ async function loadUsageData() {
             }
         });
         
-        // Update table
+        // Update table with new pagination
         usageData = byUserData.users;
         totalUsers = byUserData.pagination.total_records;
-        updateTable();
+        
+        // Initialize pagination data
+        usagePagination.allData = usageData;
+        usagePagination.filteredData = usageData;
+        usagePagination.currentPage = 1;
+        
+        // Render with new pagination
+        renderUsagePaginatedTable();
         
         // Update connection status
         updateConnectionStatus(true);
@@ -239,7 +254,14 @@ async function loadUsageData() {
         updateCharts(mockData.charts);
         usageData = mockData.users;
         totalUsers = usageData.length;
-        updateTable();
+        
+        // Initialize pagination data with mock data
+        usagePagination.allData = usageData;
+        usagePagination.filteredData = usageData;
+        usagePagination.currentPage = 1;
+        
+        // Render with new pagination
+        renderUsagePaginatedTable();
     }
 }
 
@@ -771,4 +793,96 @@ function updateConnectionStatus(isConnected) {
  */
 function showError(message) {
     alert(message); // TODO: Replace with better error UI
+}
+
+// ============================================================================
+// USAGE TABLE FILTERING AND PAGINATION (NEW STYLE)
+// ============================================================================
+
+/**
+ * Filter usage table based on search input
+ */
+function filterUsageTable() {
+    const searchTerm = document.getElementById('usage-search').value.toLowerCase();
+    
+    if (!searchTerm) {
+        usagePagination.filteredData = usagePagination.allData;
+    } else {
+        usagePagination.filteredData = usagePagination.allData.filter(user => {
+            return (
+                user.email?.toLowerCase().includes(searchTerm) ||
+                user.person?.toLowerCase().includes(searchTerm) ||
+                user.team?.toLowerCase().includes(searchTerm)
+            );
+        });
+    }
+    
+    usagePagination.currentPage = 1;
+    renderUsagePaginatedTable();
+}
+
+/**
+ * Render usage table with pagination
+ */
+function renderUsagePaginatedTable() {
+    const tbody = document.querySelector('#usage-table tbody');
+    const start = (usagePagination.currentPage - 1) * usagePagination.pageSize;
+    const end = start + usagePagination.pageSize;
+    const pageData = usagePagination.filteredData.slice(start, end);
+    
+    if (pageData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No users found</td></tr>';
+        updateUsagePaginationControls();
+        return;
+    }
+    
+    tbody.innerHTML = pageData.map(user => `
+        <tr>
+            <td>${user.email}</td>
+            <td>${user.person}</td>
+            <td>${user.team}</td>
+            <td>${user.requests.toLocaleString()}</td>
+            <td>${user.tokens.toLocaleString()}</td>
+            <td>$${user.cost.toFixed(2)}</td>
+        </tr>
+    `).join('');
+    
+    updateUsagePaginationControls();
+}
+
+/**
+ * Update usage pagination controls
+ */
+function updateUsagePaginationControls() {
+    const total = usagePagination.filteredData.length;
+    const totalPages = Math.ceil(total / usagePagination.pageSize);
+    const start = total === 0 ? 0 : (usagePagination.currentPage - 1) * usagePagination.pageSize + 1;
+    const end = Math.min(usagePagination.currentPage * usagePagination.pageSize, total);
+    
+    document.getElementById('usage-pagination-info').textContent = `Showing ${start}-${end} of ${total} users`;
+    document.getElementById('usage-current-page').textContent = usagePagination.currentPage;
+    document.getElementById('usage-total-pages').textContent = totalPages || 1;
+    document.getElementById('usage-prev-page').disabled = usagePagination.currentPage === 1;
+    document.getElementById('usage-next-page').disabled = usagePagination.currentPage >= totalPages;
+}
+
+/**
+ * Navigate to previous usage page
+ */
+function previousUsagePage() {
+    if (usagePagination.currentPage > 1) {
+        usagePagination.currentPage--;
+        renderUsagePaginatedTable();
+    }
+}
+
+/**
+ * Navigate to next usage page
+ */
+function nextUsagePage() {
+    const totalPages = Math.ceil(usagePagination.filteredData.length / usagePagination.pageSize);
+    if (usagePagination.currentPage < totalPages) {
+        usagePagination.currentPage++;
+        renderUsagePaginatedTable();
+    }
 }

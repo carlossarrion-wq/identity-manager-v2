@@ -239,18 +239,31 @@ class CognitoService:
             
             groups = []
             for group_data in response.get('Groups', []):
-                # Contar usuarios en el grupo
-                users_response = self.client.list_users_in_group(
-                    UserPoolId=self.user_pool_id,
-                    GroupName=group_data['GroupName'],
-                    Limit=1
-                )
+                # Contar usuarios en el grupo - necesitamos paginar para obtener el conteo real
+                user_count = 0
+                next_token = None
+                
+                while True:
+                    params = {
+                        'UserPoolId': self.user_pool_id,
+                        'GroupName': group_data['GroupName'],
+                        'Limit': 60
+                    }
+                    if next_token:
+                        params['NextToken'] = next_token
+                    
+                    users_response = self.client.list_users_in_group(**params)
+                    user_count += len(users_response.get('Users', []))
+                    next_token = users_response.get('NextToken')
+                    
+                    if not next_token:
+                        break
                 
                 groups.append({
                     'group_name': group_data['GroupName'],
                     'description': group_data.get('Description', ''),
                     'precedence': group_data.get('Precedence', 0),
-                    'user_count': len(users_response.get('Users', []))
+                    'user_count': user_count
                 })
             
             return {'groups': groups}

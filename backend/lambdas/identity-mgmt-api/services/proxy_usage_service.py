@@ -414,11 +414,12 @@ class ProxyUsageService:
         
         offset = (page - 1) * page_size
         
-        # Query para obtener datos - solo peticiones exitosas, incluyendo team
+        # Query para obtener datos - solo peticiones exitosas, incluyendo team y person
         query = """
             SELECT 
                 cognito_email as email,
                 cognito_user_id,
+                MAX(person) as person,
                 MAX(team) as team,
                 COUNT(*) as requests,
                 SUM(tokens_input + tokens_output) as tokens,
@@ -451,7 +452,7 @@ class ProxyUsageService:
         for row in results:
             users.append({
                 'email': row['email'],
-                'person': row['email'],  # Usar email como nombre
+                'person': row['person'] if row['person'] else row['email'],  # Usar person de BD, fallback a email
                 'team': row['team'] if row['team'] else 'N/A',  # Team de la BD
                 'requests': row['requests'],
                 'tokens': int(row['tokens']) if row['tokens'] else 0,

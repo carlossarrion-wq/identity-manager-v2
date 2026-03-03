@@ -126,7 +126,15 @@ async function loadAllPermissions() {
         // La respuesta viene en response.permissions directamente desde api.request
         if (response && response.permissions) {
             permissionsCache.allPermissions = response.permissions;
-            renderPermissionsTable(permissionsCache.allPermissions);
+            
+            // Initialize pagination data
+            permissionsPagination.allData = response.permissions;
+            permissionsPagination.filteredData = response.permissions;
+            permissionsPagination.currentPage = 1;
+            
+            // Render with pagination
+            renderPermissionsPaginatedTable();
+            
             console.log(`✓ Loaded ${response.permissions.length} permissions`);
         } else {
             tbody.innerHTML = '<tr><td colspan="10">No permissions found</td></tr>';
