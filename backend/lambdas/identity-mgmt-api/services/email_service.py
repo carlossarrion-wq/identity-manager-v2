@@ -167,7 +167,7 @@ class EmailService:
             padding: 20px;
         }}
         .header {{
-            background-color: #4CAF50;
+            background-color: #435B76;
             color: white;
             padding: 20px;
             text-align: center;
@@ -181,7 +181,7 @@ class EmailService:
         }}
         .token-box {{
             background-color: #fff;
-            border: 2px solid #4CAF50;
+            border: 2px solid #435B76;
             border-radius: 5px;
             padding: 15px;
             margin: 20px 0;
