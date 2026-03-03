@@ -40,7 +40,6 @@ custom:auto_regen_tokens (String: "true" | "false")
 3. ✅ Usuario tiene `custom:auto_regen_tokens = true` en Cognito
 4. ✅ Token existe en la base de datos
 5. ✅ Usuario no excede el límite máximo de tokens activos
-6. ✅ No se excede el límite de regeneraciones diarias (3/día)
 
 #### 2.2 Proceso de Validación
 ```
@@ -275,18 +274,12 @@ HTTP 401 Unauthorized
 
 ### 7. Seguridad y Límites
 
-#### 7.1 Rate Limiting
-- **Máximo 3 regeneraciones por usuario por día**
-- Prevenir abuso del sistema
-- Registrar intentos en tabla de auditoría
-
-#### 7.2 Validaciones
+#### 7.1 Validaciones
 - ✅ Token debe ser auténtico (firma válida)
 - ✅ Token debe estar expirado (no revocado)
 - ✅ Usuario debe existir y estar activo en Cognito
 - ✅ Usuario debe tener `custom:auto_regen_tokens = true` en Cognito
 - ✅ **Usuario no debe exceder el límite máximo de tokens activos**
-- ✅ No exceder límite de regeneraciones diarias (3/día)
 
 **Validación de Límite de Tokens Activos:**
 ```python
@@ -343,7 +336,7 @@ ON "identity-manager-token-regenerations-tbl" (user_id, created_at);
 ☐ Auto-regenerar tokens expirados
   Cuando esta opción está activada, si tu token expira,
   el sistema generará automáticamente uno nuevo y te lo
-  enviará por email (máximo 3 veces al día).
+  enviará por email.
 ```
 
 #### 8.2 Historial de Regeneraciones
@@ -402,17 +395,7 @@ Usuario → Va al dashboard
        → Crea nuevo token manualmente
 ```
 
-#### Caso 3: Límite Diario Excedido
-```
-Usuario → Petición con token expirado (4ta vez en el día)
-       → Proxy detecta expiración
-       → Verifica auto_regen = true
-       → Verifica límite diario → EXCEDIDO
-       → Retorna 401 con mensaje de límite excedido
-Usuario → Debe crear token manualmente
-```
-
-#### Caso 4: Límite de Tokens Activos Excedido
+#### Caso 3: Límite de Tokens Activos Excedido
 ```
 Usuario → Petición con token expirado
        → Proxy detecta expiración
@@ -433,10 +416,10 @@ Usuario → Va al dashboard
 ✅ Automatización de tarea repetitiva
 
 ### Consideraciones
-⚠️ Posible abuso si no hay rate limiting
 ⚠️ Dependencia del servicio de email
 ⚠️ Complejidad adicional en el código
 ⚠️ Necesidad de monitoreo adicional
+⚠️ El límite de tokens activos previene abuso del sistema
 
 ## 🚀 Plan de Implementación
 
@@ -451,7 +434,7 @@ Usuario → Va al dashboard
 - [ ] Crear `token_regeneration_service.py`
 - [ ] Añadir método para consultar custom attribute de Cognito
 - [ ] Añadir endpoint `/api/tokens/regenerate`
-- [ ] Implementar validaciones y rate limiting (3 regeneraciones/día)
+- [ ] Implementar validación de límite de tokens activos
 - [ ] Crear template de email para token regenerado
 - [ ] Tests unitarios
 
@@ -483,7 +466,7 @@ Usuario → Va al dashboard
 ## 📝 Notas Adicionales
 
 - Esta feature es **opt-in**: usuarios deben activarla explícitamente
-- El límite de 3 regeneraciones/día es configurable
+- El único límite es el número máximo de tokens activos (por defecto 5)
 - Los tokens regenerados tienen la misma duración que el original
 - Se mantiene trazabilidad completa en auditoría
 - Compatible con el sistema de cuotas existente
