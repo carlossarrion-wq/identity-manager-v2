@@ -25,6 +25,7 @@ from services.jwt_service import JWTService
 from services.email_service import EmailService
 from services.permissions_service import PermissionsService
 from services.proxy_usage_service import ProxyUsageService
+from services.token_regeneration_service import TokenRegenerationService
 from utils.validators import validate_request
 from utils.response_builder import build_response, build_error_response
 
@@ -35,11 +36,12 @@ jwt_service = None
 email_service = None
 permissions_service = None
 proxy_usage_service = None
+token_regeneration_service = None
 
 
 def initialize_services():
     """Inicializar servicios en el primer invocación (lazy loading)"""
-    global cognito_service, database_service, jwt_service, email_service, permissions_service, proxy_usage_service
+    global cognito_service, database_service, jwt_service, email_service, permissions_service, proxy_usage_service, token_regeneration_service
     
     if cognito_service is None:
         cognito_service = CognitoService()
@@ -53,6 +55,8 @@ def initialize_services():
         permissions_service = PermissionsService()
     if proxy_usage_service is None:
         proxy_usage_service = ProxyUsageService(database_service)
+    if token_regeneration_service is None:
+        token_regeneration_service = TokenRegenerationService(database_service, cognito_service, email_service)
 
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -147,6 +151,7 @@ def route_operation(operation: str, body: Dict[str, Any], request_id: str) -> Di
         'revoke_token': handle_revoke_token,
         'restore_token': handle_restore_token,
         'delete_token': handle_delete_token,
+        'regenerate_token': handle_regenerate_token,
         
         # Operaciones de perfiles
         'list_profiles': handle_list_profiles,
@@ -585,6 +590,55 @@ def handle_delete_token(body: Dict[str, Any], request_id: str) -> Dict[str, Any]
         'success': True,
         'message': 'Token eliminado permanentemente de la base de datos'
     }
+
+
+def handle_regenerate_token(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """
+    Regenerar token JWT expirado automáticamente
+    
+    Este endpoint es llamado por el proxy cuando detecta un token expirado
+    y el usuario tiene habilitada la regeneración automática.
+    """
+    logger.info(f"[{request_id}] Regenerando token expirado")
+    
+    data = body.get('data', {})
+    expired_token_jti = data.get('expired_token_jti')
+    user_id = data.get('user_id')
+    client_ip = data.get('client_ip')
+    user_agent = data.get('user_agent')
+    
+    if not expired_token_jti or not user_id:
+        raise ValueError('Los parámetros "expired_token_jti" y "user_id" son requeridos')
+    
+    # Llamar al servicio de regeneración
+    result = token_regeneration_service.regenerate_expired_token(
+        expired_token_jti=expired_token_jti,
+        user_id=user_id,
+        client_ip=client_ip,
+        user_agent=user_agent
+    )
+    
+    # Si la regeneración fue exitosa, registrar en auditoría
+    if result.get('success'):
+        database_service.log_audit(
+            operation_type='REGENERATE_TOKEN',
+            resource_type='jwt_token',
+            resource_id=result['new_token_jti'],
+            cognito_user_id=user_id,
+            cognito_email=None,  # Se obtiene del token info
+            new_value={
+                'new_jti': result['new_token_jti'],
+                'old_jti': expired_token_jti,
+                'email_sent': result.get('email_sent', False)
+            },
+            request_id=request_id
+        )
+        
+        logger.info(f"[{request_id}] Token regenerado exitosamente: {result['new_token_jti']}")
+    else:
+        logger.warning(f"[{request_id}] Regeneración fallida: {result.get('error', 'unknown')}")
+    
+    return result
 
 
 # ============================================================================

@@ -151,6 +151,23 @@ class EmailService:
         profile = token_info.get('profile', {})
         expires_at = token_info.get('expires_at', 'N/A')
         validity_days = token_info.get('validity_days', 'N/A')
+        is_regenerated = token_info.get('regenerated', False)
+        old_token_expired_at = token_info.get('old_token_expired_at', '')
+        
+        # Título y emoji según si es regeneración o creación
+        title_emoji = "🔄" if is_regenerated else "🔑"
+        title_text = "Token JWT Regenerado Automáticamente" if is_regenerated else "Nuevo Token JWT Creado"
+        
+        # Mensaje adicional para tokens regenerados
+        regen_message = ""
+        if is_regenerated:
+            regen_message = f"""
+        <div class="warning">
+            <strong>ℹ️ Token Regenerado Automáticamente</strong>
+            <p>Tu token anterior expiró el <strong>{old_token_expired_at}</strong>.</p>
+            <p>El sistema ha generado automáticamente un nuevo token con la misma configuración.</p>
+        </div>
+        """
         
         html = f"""
 <!DOCTYPE html>
@@ -217,12 +234,14 @@ class EmailService:
 </head>
 <body>
     <div class="header">
-        <h1>🔑 Nuevo Token JWT Creado</h1>
+        <h1>{title_emoji} {title_text}</h1>
     </div>
     <div class="content">
         <p>Hola <strong>{recipient_name}</strong>,</p>
         
-        <p>Se ha creado un nuevo token JWT para tu cuenta. A continuación encontrarás los detalles:</p>
+        {regen_message}
+        
+        <p>A continuación encontrarás los detalles del token:</p>
         
         <table class="info-table">
             <tr>
