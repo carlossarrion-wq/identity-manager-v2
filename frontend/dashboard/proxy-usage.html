@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proxy Bedrock Usage - Identity Manager</title>
+    
+    <!-- AWS Amazon Ember Font -->
+    <link rel="preconnect" href="https://d1tzzh0q3mh5bp.cloudfront.net">
+    <link href="https://d1tzzh0q3mh5bp.cloudfront.net/fonts/amazon-ember/amazon-ember.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Dashboard CSS -->
+    <link rel="stylesheet" href="css/dashboard.css">
+    
+    <style>
+        /* Additional styles specific to proxy usage page */
+        .filters-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .date-filters {
+            display: flex;
+            gap: 1rem;
+            align-items: end;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .quick-filters {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .quick-filters button {
+            padding: 0.5rem 1rem;
+            background: #1e5a4f;
+            border: 2px solid #1e5a4f;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            color: white;
+            font-weight: 500;
+        }
+
+        .quick-filters button:hover {
+            background: #164438;
+            border-color: #164438;
+            box-shadow: 0 4px 15px rgba(30, 90, 79, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .quick-filters button.active {
+            background: #0f3329;
+            border-color: #0f3329;
+            box-shadow: 0 4px 15px rgba(15, 51, 41, 0.5);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-footer {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            font-size: 0.9rem;
+            color: #718096;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .pagination-info {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .pagination-buttons button {
+            padding: 0.5rem 0.75rem;
+            background: rgba(49, 151, 149, 0.1);
+            border: 2px solid rgba(49, 151, 149, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #319795;
+            font-weight: 500;
+        }
+
+        .pagination-buttons button:hover:not(:disabled) {
+            background: rgba(49, 151, 149, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .pagination-buttons button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Pie chart specific styles */
+        .pie-chart-container {
+            position: relative;
+            height: 350px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .date-filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Connection Status -->
+    <div id="connection-status" class="connection-status connected">
+        🟢 Connected to API
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>Proxy Bedrock Usage Analytics</h1>
+        <p>Monitor and analyze proxy usage across teams</p>
+        <button onclick="window.location.href='index.html'">Back to Dashboard</button>
+    </div>
+
+    <div class="container">
+        <!-- Filters -->
+        <div class="filters-card">
+            <div class="date-filters">
+                <div class="filter-group">
+                    <label for="start-date">From:</label>
+                    <input type="date" id="start-date">
+                </div>
+                <div class="filter-group">
+                    <label for="end-date">To:</label>
+                    <input type="date" id="end-date">
+                </div>
+                <button class="btn-primary" onclick="applyDateFilter()">Apply</button>
+            </div>
+            <div class="quick-filters">
+                <button onclick="setQuickFilter('today')">Today</button>
+                <button onclick="setQuickFilter('7days')">Last 7 Days</button>
+                <button onclick="setQuickFilter('30days')">Last 30 Days</button>
+            </div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h3>Total Requests</h3>
+                <div class="metric-value" id="total-requests">-</div>
+                <div class="metric-change positive" id="requests-change">
+                    Loading...
+                </div>
+            </div>
+            <div class="metric-card">
+                <h3>Total Tokens</h3>
+                <div class="metric-value" id="total-tokens">-</div>
+                <div class="metric-change positive" id="tokens-change">
+                    Loading...
+                </div>
+            </div>
+            <div class="metric-card">
+                <h3>Total Cost</h3>
+                <div class="metric-value" id="total-cost">-</div>
+                <div class="metric-change negative" id="cost-change">
+                    Loading...
+                </div>
+            </div>
+            <div class="metric-card">
+                <h3>Avg Response Time</h3>
+                <div class="metric-value" id="avg-response-time">-</div>
+                <div class="metric-change positive" id="response-time-change">
+                    Loading...
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+            <!-- Chart 1: By Hour -->
+            <div class="card">
+                <h2>Usage by Hour</h2>
+                <div class="chart-container">
+                    <canvas id="chart-by-hour"></canvas>
+                </div>
+                <div class="chart-footer">
+                    <strong>Peak Hour:</strong> <span id="peak-hour">-</span>
+                </div>
+            </div>
+
+            <!-- Chart 2: By Team -->
+            <div class="card">
+                <h2>Usage by Team</h2>
+                <div class="chart-container">
+                    <canvas id="chart-by-team"></canvas>
+                </div>
+                <div class="chart-footer">
+                    <strong>Top Team:</strong> <span id="top-team">-</span>
+                </div>
+            </div>
+
+            <!-- Chart 3: By Day -->
+            <div class="card">
+                <h2>Usage by Day</h2>
+                <div class="chart-container">
+                    <canvas id="chart-by-day"></canvas>
+                </div>
+                <div class="chart-footer">
+                    <strong>Peak Day:</strong> <span id="peak-day">-</span>
+                </div>
+            </div>
+
+            <!-- Chart 4: Response Status -->
+            <div class="card">
+                <h2>Response Status</h2>
+                <div class="pie-chart-container">
+                    <canvas id="chart-response-status"></canvas>
+                </div>
+                <div class="chart-footer">
+                    <strong>Success Rate:</strong> <span id="success-rate">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Table -->
+        <div class="card">
+            <div class="table-header">
+                <h2>Usage by User</h2>
+                <button class="export-button" onclick="exportToCSV()">↓ Export CSV</button>
+            </div>
+            <table id="usage-table">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Person</th>
+                        <th>Team</th>
+                        <th>Requests</th>
+                        <th>Tokens</th>
+                        <th>Cost (USD)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="6">
+                            <div class="loading-spinner"></div>
+                            Loading usage data...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="pagination">
+                <div class="pagination-info" id="pagination-info">
+                    Showing 0-0 of 0 users
+                </div>
+                <div class="pagination-buttons">
+                    <button id="prev-page" onclick="previousPage()" disabled><</button>
+                    <button id="next-page" onclick="nextPage()">></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trend Chart -->
+        <div class="card">
+            <h2>Usage Trend by Team</h2>
+            <div class="chart-container" style="height: 400px;">
+                <canvas id="chart-trend"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard JavaScript -->
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/proxy-usage.js"></script>
+    
+    <script>
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Proxy Usage Dashboard loaded');
+            initProxyUsage();
+        });
+    </script>
+</body>
+</html>

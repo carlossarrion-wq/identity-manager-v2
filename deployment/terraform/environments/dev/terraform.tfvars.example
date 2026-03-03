@@ -1,0 +1,32 @@
+# =====================================================
+# Example Terraform Variables for Development
+# =====================================================
+# Copy this file to terraform.tfvars and update with your values
+# cp terraform.tfvars.example terraform.tfvars
+
+# AWS Configuration
+aws_region = "eu-west-1"
+
+# Network Configuration
+vpc_id = "vpc-xxxxxxxxxxxxxxxxx"  # Your VPC ID
+
+# Optional: Specify subnet IDs manually, or let Terraform auto-discover
+# subnet_ids = ["subnet-xxxxxxxxx", "subnet-yyyyyyyyy"]
+
+# CIDR blocks allowed to access RDS
+allowed_cidr_blocks = [
+  "10.0.0.0/8",      # Internal VPC
+  # "1.2.3.4/32",    # Your IP for testing
+]
+
+# Database Configuration
+db_master_username          = "dbadmin"
+postgres_version            = "15.4"
+db_instance_class           = "db.t3.micro"
+db_allocated_storage        = 20
+db_storage_type             = "gp3"
+db_publicly_accessible      = false
+db_backup_retention_period  = 3
+db_deletion_protection      = false  # Set to true for production
+db_skip_final_snapshot      = true   # Set to false for production
+db_monitoring_interval      = 0      # Set to 60 for production

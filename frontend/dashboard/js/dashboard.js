@@ -120,8 +120,13 @@ function showTab(tabId) {
     // Update state
     dashboardState.currentTab = tabId;
     
-    // Load data for the tab
-    loadDashboardData();
+    // Initialize Proxy Usage tab if selected
+    if (tabId === 'proxy-usage-tab' && typeof initProxyUsage === 'function') {
+        initProxyUsage();
+    } else {
+        // Load data for other tabs
+        loadDashboardData();
+    }
 }
 
 // ============================================================================

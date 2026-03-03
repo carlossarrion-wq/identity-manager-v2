@@ -60,13 +60,37 @@ echo ""
 # Limpiar archivos innecesarios
 echo -e "${YELLOW}[4/5]${NC} Limpiando archivos innecesarios..."
 cd "$BUILD_DIR"
+
+# IMPORTANTE: Eliminar venv que se copió del código fuente
+rm -rf venv/ 2>/dev/null || true
+rm -rf .venv/ 2>/dev/null || true
+rm -rf env/ 2>/dev/null || true
+
+# Eliminar archivos de tests
+rm -rf tests/ 2>/dev/null || true
+rm -f test_*.py 2>/dev/null || true
+rm -f *_test.py 2>/dev/null || true
+rm -f pytest.ini 2>/dev/null || true
+rm -f .coverage 2>/dev/null || true
+rm -f coverage.xml 2>/dev/null || true
+rm -rf htmlcov/ 2>/dev/null || true
+rm -rf .pytest_cache/ 2>/dev/null || true
+
+# Eliminar archivos de desarrollo
+rm -f requirements-dev.txt 2>/dev/null || true
+rm -f README.md 2>/dev/null || true
+rm -f TESTING_STRATEGY.md 2>/dev/null || true
+rm -f run_permissions_tests.sh 2>/dev/null || true
+
+# Limpiar cache y archivos temporales
 find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 find . -type d -name "*.dist-info" -exec rm -rf {} + 2>/dev/null || true
 find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
 find . -type f -name "*.pyc" -delete 2>/dev/null || true
 find . -type f -name "*.pyo" -delete 2>/dev/null || true
 find . -type f -name ".DS_Store" -delete 2>/dev/null || true
-echo -e "${GREEN}✓ Archivos limpiados${NC}"
+
+echo -e "${GREEN}✓ Archivos limpiados (venv, tests y dev files excluidos)${NC}"
 echo ""
 
 # Crear archivo ZIP

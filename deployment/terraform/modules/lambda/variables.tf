@@ -17,6 +17,18 @@ variable "lambda_zip_path" {
   type        = string
 }
 
+variable "s3_bucket" {
+  description = "Bucket S3 para deployment (requerido si ZIP > 50MB)"
+  type        = string
+  default     = null
+}
+
+variable "s3_key" {
+  description = "Key del objeto en S3 (requerido si se usa s3_bucket)"
+  type        = string
+  default     = null
+}
+
 variable "timeout" {
   description = "Timeout de la función Lambda en segundos"
   type        = number

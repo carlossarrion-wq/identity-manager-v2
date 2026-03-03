@@ -155,7 +155,10 @@ resource "aws_cloudwatch_log_group" "lambda_logs" {
 # ============================================================================
 
 resource "aws_lambda_function" "api" {
-  filename         = var.lambda_zip_path
+  # Usar S3 si el archivo es mayor a 50MB, sino usar filename directo
+  s3_bucket        = var.s3_bucket != null ? var.s3_bucket : null
+  s3_key           = var.s3_key != null ? var.s3_key : null
+  filename         = var.s3_bucket == null ? var.lambda_zip_path : null
   function_name    = var.function_name
   role            = aws_iam_role.lambda_role.arn
   handler         = "lambda_function.lambda_handler"

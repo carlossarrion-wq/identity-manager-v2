@@ -24,6 +24,7 @@ from services.database_service import DatabaseService
 from services.jwt_service import JWTService
 from services.email_service import EmailService
 from services.permissions_service import PermissionsService
+from services.proxy_usage_service import ProxyUsageService
 from utils.validators import validate_request
 from utils.response_builder import build_response, build_error_response
 
@@ -33,11 +34,12 @@ database_service = None
 jwt_service = None
 email_service = None
 permissions_service = None
+proxy_usage_service = None
 
 
 def initialize_services():
     """Inicializar servicios en el primer invocación (lazy loading)"""
-    global cognito_service, database_service, jwt_service, email_service, permissions_service
+    global cognito_service, database_service, jwt_service, email_service, permissions_service, proxy_usage_service
     
     if cognito_service is None:
         cognito_service = CognitoService()
@@ -49,6 +51,8 @@ def initialize_services():
         email_service = EmailService()
     if permissions_service is None:
         permissions_service = PermissionsService()
+    if proxy_usage_service is None:
+        proxy_usage_service = ProxyUsageService(database_service)
 
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -163,6 +167,15 @@ def route_operation(operation: str, body: Dict[str, Any], request_id: str) -> Di
 
         # Operaciones de configuración
         'get_config': handle_get_config,
+        
+        # Operaciones de uso del proxy
+        'get_proxy_usage_summary': handle_get_proxy_usage_summary,
+        'get_proxy_usage_by_hour': handle_get_proxy_usage_by_hour,
+        'get_proxy_usage_by_team': handle_get_proxy_usage_by_team,
+        'get_proxy_usage_by_day': handle_get_proxy_usage_by_day,
+        'get_proxy_usage_response_status': handle_get_proxy_usage_response_status,
+        'get_proxy_usage_trend': handle_get_proxy_usage_trend,
+        'get_proxy_usage_by_user': handle_get_proxy_usage_by_user,
     }
     
     handler = operations.get(operation)
@@ -807,3 +820,154 @@ def handle_list_modules(body: Dict[str, Any], request_id: str) -> Dict[str, Any]
     result = permissions_service.list_modules(app_id)
     
     return result
+
+
+# ============================================================================
+# HANDLERS DE OPERACIONES - USO DEL PROXY
+# ============================================================================
+
+def _parse_date_filter(date_str: str, is_end_date: bool = False) -> datetime:
+    """
+    Parse date string from filters, handling both YYYY-MM-DD and ISO formats
+    
+    Args:
+        date_str: Date string to parse
+        is_end_date: If True, set time to end of day (23:59:59)
+        
+    Returns:
+        datetime object
+    """
+    if 'T' not in date_str:
+        # YYYY-MM-DD format - convert to full day range
+        dt = datetime.strptime(date_str, '%Y-%m-%d')
+        if is_end_date:
+            return dt.replace(hour=23, minute=59, second=59, microsecond=999999)
+        else:
+            return dt.replace(hour=0, minute=0, second=0, microsecond=0)
+    else:
+        # ISO format with time
+        return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+
+
+def handle_get_proxy_usage_summary(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Obtener resumen de uso del proxy"""
+    logger.info(f"[{request_id}] Obteniendo resumen de uso del proxy")
+    
+    filters = body.get('filters', {})
+    
+    # Parse dates - handle both YYYY-MM-DD and ISO format
+    start_date_str = filters['start_date']
+    end_date_str = filters['end_date']
+    
+    # If date is in YYYY-MM-DD format, convert to full day range
+    if 'T' not in start_date_str:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').replace(hour=0, minute=0, second=0, microsecond=0)
+    else:
+        start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
+    
+    if 'T' not in end_date_str:
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').replace(hour=23, minute=59, second=59, microsecond=999999)
+    else:
+        end_date = datetime.fromisoformat(end_date_str.replace('Z', '+00:00'))
+    
+    logger.info(f"[{request_id}] Date range: {start_date} to {end_date}")
+    
+    user_id = filters.get('user_id')
+    
+    result = proxy_usage_service.get_summary(start_date, end_date, user_id)
+    
+    return {'success': True, 'data': result}
+
+
+def handle_get_proxy_usage_by_hour(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Obtener uso del proxy por hora"""
+    logger.info(f"[{request_id}] Obteniendo uso por hora")
+    
+    filters = body.get('filters', {})
+    start_date = _parse_date_filter(filters['start_date'], is_end_date=False)
+    end_date = _parse_date_filter(filters['end_date'], is_end_date=True)
+    
+    logger.info(f"[{request_id}] Date range: {start_date} to {end_date}")
+    
+    result = proxy_usage_service.get_usage_by_hour(start_date, end_date)
+    
+    return {'success': True, 'data': result}
+
+
+def handle_get_proxy_usage_by_team(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Obtener uso del proxy por equipo"""
+    logger.info(f"[{request_id}] Obteniendo uso por equipo")
+    
+    filters = body.get('filters', {})
+    start_date = _parse_date_filter(filters['start_date'], is_end_date=False)
+    end_date = _parse_date_filter(filters['end_date'], is_end_date=True)
+    
+    logger.info(f"[{request_id}] Date range: {start_date} to {end_date}")
+    
+    result = proxy_usage_service.get_usage_by_team(start_date, end_date)
+    
+    return {'success': True, 'data': result}
+
+
+def handle_get_proxy_usage_by_day(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Obtener uso del proxy por día"""
+    logger.info(f"[{request_id}] Obteniendo uso por día")
+    
+    filters = body.get('filters', {})
+    start_date = _parse_date_filter(filters['start_date'], is_end_date=False)
+    end_date = _parse_date_filter(filters['end_date'], is_end_date=True)
+    
+    logger.info(f"[{request_id}] Date range: {start_date} to {end_date}")
+    
+    result = proxy_usage_service.get_usage_by_day(start_date, end_date)
+    
+    return {'success': True, 'data': result}
+
+
+def handle_get_proxy_usage_response_status(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Obtener distribución de estados de respuesta"""
+    logger.info(f"[{request_id}] Obteniendo estados de respuesta")
+    
+    filters = body.get('filters', {})
+    start_date = _parse_date_filter(filters['start_date'], is_end_date=False)
+    end_date = _parse_date_filter(filters['end_date'], is_end_date=True)
+    
+    logger.info(f"[{request_id}] Date range: {start_date} to {end_date}")
+    
+    result = proxy_usage_service.get_response_status(start_date, end_date)
+    
+    return {'success': True, 'data': result}
+
+
+def handle_get_proxy_usage_trend(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Obtener tendencia de uso por equipo"""
+    logger.info(f"[{request_id}] Obteniendo tendencia de uso")
+    
+    filters = body.get('filters', {})
+    start_date = _parse_date_filter(filters['start_date'], is_end_date=False)
+    end_date = _parse_date_filter(filters['end_date'], is_end_date=True)
+    
+    logger.info(f"[{request_id}] Date range: {start_date} to {end_date}")
+    
+    result = proxy_usage_service.get_usage_trend(start_date, end_date)
+    
+    return {'success': True, 'data': result}
+
+
+def handle_get_proxy_usage_by_user(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Obtener uso por usuario con paginación"""
+    logger.info(f"[{request_id}] Obteniendo uso por usuario")
+    
+    filters = body.get('filters', {})
+    pagination = body.get('pagination', {})
+    
+    start_date = _parse_date_filter(filters['start_date'], is_end_date=False)
+    end_date = _parse_date_filter(filters['end_date'], is_end_date=True)
+    page = pagination.get('page', 1)
+    page_size = pagination.get('page_size', 10)
+    
+    logger.info(f"[{request_id}] Date range: {start_date} to {end_date}")
+    
+    result = proxy_usage_service.get_usage_by_user(start_date, end_date, page, page_size)
+    
+    return {'success': True, 'data': result}
