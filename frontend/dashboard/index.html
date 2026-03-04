@@ -527,6 +527,30 @@
         </div>
     </div>
 
+    <!-- Logout Confirmation Modal -->
+    <div id="logout-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Cerrar Sesión</h2>
+                <button class="modal-close" onclick="closeLogoutModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1.5rem; color: #4a5568; font-size: 1rem; line-height: 1.6;">
+                    ¿Estás seguro de que deseas cerrar sesión? Tendrás que iniciar sesión nuevamente para acceder al dashboard.
+                </p>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeLogoutModal()">Cancelar</button>
+                    <button type="button" class="btn-primary" onclick="confirmLogout()" style="background: linear-gradient(135deg, #f87171 0%, #ef4444 100%); box-shadow: 0 4px 15px rgba(248, 113, 113, 0.3);">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 16px; height: 16px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+                        </svg>
+                        Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Assign Permission Modal -->
     <div id="assign-permission-modal" class="modal">
         <div class="modal-content">
@@ -606,6 +630,9 @@
         </div>
     </div>
 
+    <!-- Authentication Guard (MUST be loaded first) -->
+    <script src="js/auth-guard.js"></script>
+    
     <!-- Dashboard JavaScript -->
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>

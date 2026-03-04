@@ -565,9 +565,25 @@ function showAlert(type, message) {
 }
 
 function logout() {
-    if (confirm('Are you sure you want to logout?')) {
-        window.location.href = 'login.html';
-    }
+    // Show logout confirmation modal
+    document.getElementById('logout-modal').classList.add('show');
+}
+
+function closeLogoutModal() {
+    document.getElementById('logout-modal').classList.remove('show');
+}
+
+function confirmLogout() {
+    // Clear authentication data
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_data');
+    localStorage.removeItem('token_expires_at');
+    
+    // Close modal
+    closeLogoutModal();
+    
+    // Redirect to login page
+    window.location.href = '/frontend/login.html';
 }
 
 // ============================================================================
