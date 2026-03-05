@@ -848,6 +848,8 @@ table td:nth-child(n+4) {
     background-color: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(5px);
     animation: fadeIn 0.3s ease;
+    align-items: center;
+    justify-content: center;
 }
 
 @keyframes fadeIn {
@@ -857,19 +859,18 @@ table td:nth-child(n+4) {
 
 .modal.show {
     display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .modal-content {
     background: white;
     border-radius: 16px;
     width: 90%;
-    max-width: 600px;
-    max-height: 85vh;
+    max-width: 550px;
+    max-height: 75vh;
     overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     animation: slideIn 0.3s ease;
+    margin: auto;
 }
 
 @keyframes slideIn {
