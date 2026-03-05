@@ -96,7 +96,7 @@ def validate_create_token(body: Dict[str, Any]) -> Optional[str]:
     # Validar período de validez si se proporciona
     validity_period = data.get('validity_period')
     if validity_period:
-        valid_periods = ['1_day', '7_days', '30_days', '60_days', '90_days']
+        valid_periods = ['1_minute', '1_day', '7_days', '30_days', '60_days', '90_days']
         if validity_period not in valid_periods:
             return f'Período de validez inválido. Opciones válidas: {", ".join(valid_periods)}'
     

@@ -299,6 +299,33 @@ class CognitoService:
             'auto_regenerate_tokens': auto_regenerate
         }
     
+    def get_user_attributes(self, username: str) -> Dict[str, str]:
+        """
+        Obtener atributos de un usuario
+        
+        Args:
+            username: Username o Cognito User ID del usuario
+            
+        Returns:
+            Dict con atributos del usuario
+        """
+        try:
+            response = self.client.admin_get_user(
+                UserPoolId=self.user_pool_id,
+                Username=username
+            )
+            
+            # Convertir lista de atributos a diccionario
+            attributes = {}
+            for attr in response.get('UserAttributes', []):
+                attributes[attr['Name']] = attr['Value']
+            
+            return attributes
+            
+        except ClientError as e:
+            logger.error(f"Error obteniendo atributos de usuario {username}: {e}")
+            return {}
+    
     def _get_user_groups(self, username: str) -> List[str]:
         """
         Obtener grupos de un usuario

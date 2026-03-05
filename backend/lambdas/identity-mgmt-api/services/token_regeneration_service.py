@@ -13,7 +13,7 @@ import pytz
 from services.database_service import DatabaseService
 from services.cognito_service import CognitoService
 from services.email_service import EmailService
-from utils.jwt_utils import generate_jwt_token
+from services.jwt_service import JWTService
 
 logger = logging.getLogger()
 
@@ -33,6 +33,7 @@ class TokenRegenerationService:
         self.db = db_service
         self.cognito = cognito_service
         self.email = email_service
+        self.jwt_service = JWTService()
     
     def check_auto_regen_enabled(self, user_id: str) -> bool:
         """
@@ -75,8 +76,8 @@ class TokenRegenerationService:
             query = """
                 SELECT COUNT(*) as active_count
                 FROM "identity-manager-tokens-tbl"
-                WHERE user_id = %s
-                AND revoked_at IS NULL
+                WHERE cognito_user_id = %s
+                AND is_revoked = FALSE
                 AND expires_at > NOW()
             """
             
@@ -116,20 +117,21 @@ class TokenRegenerationService:
             query = """
                 SELECT 
                     t.jti,
-                    t.user_id,
-                    t.profile_id,
+                    t.cognito_user_id as user_id,
+                    t.application_profile_id as profile_id,
                     t.expires_at,
-                    t.revoked_at,
+                    t.issued_at,
+                    t.is_revoked as revoked_at,
                     t.regenerated_at,
-                    u.cognito_user_id,
-                    u.email,
+                    t.cognito_user_id,
+                    t.cognito_email as email,
+                    q.person,
                     p.profile_name,
                     p.model_id,
-                    p.application_id,
-                    p.validity_days
+                    p.application_id
                 FROM "identity-manager-tokens-tbl" t
-                JOIN "identity-manager-users-tbl" u ON t.user_id = u.id
-                JOIN "identity-manager-profiles-tbl" p ON t.profile_id = p.id
+                JOIN "identity-manager-profiles-tbl" p ON t.application_profile_id = p.id
+                LEFT JOIN "bedrock-proxy-user-quotas-tbl" q ON t.cognito_user_id = q.cognito_user_id
                 WHERE t.jti = %s
             """
             
@@ -219,38 +221,88 @@ class TokenRegenerationService:
                     'max_tokens_allowed': tokens_check['max_allowed']
                 }
             
-            # 7. Generate new token with same characteristics
-            new_jti = str(uuid.uuid4())
-            validity_days = token_info['validity_days']
+            # 7. Calculate validity period from old token dates
+            issued_at = token_info['issued_at']
+            expires_at_old = token_info['expires_at']
             
-            # Calculate expiration date
+            # Calculate total seconds between issued and expiration
+            validity_seconds = (expires_at_old - issued_at).total_seconds()
+            validity_minutes = validity_seconds / 60
+            validity_days = validity_seconds / (24 * 3600)
+            
+            # Map to validity_period based on actual duration
+            if validity_minutes <= 1:
+                validity_period = '1_minute'
+            elif validity_minutes <= 5:
+                validity_period = '5_minutes'
+            elif validity_minutes <= 15:
+                validity_period = '15_minutes'
+            elif validity_minutes <= 30:
+                validity_period = '30_minutes'
+            elif validity_minutes <= 60:
+                validity_period = '1_hour'
+            elif validity_days <= 1:
+                validity_period = '1_day'
+            elif validity_days <= 7:
+                validity_period = '7_days'
+            elif validity_days <= 30:
+                validity_period = '30_days'
+            elif validity_days <= 60:
+                validity_period = '60_days'
+            else:
+                validity_period = '90_days'
+            
+            # Prepare user and profile info for JWT generation
+            user_info = {
+                'user_id': str(user_id),
+                'email': token_info['email'],
+                'groups': [],  # Will be populated if needed
+                'person': ''
+            }
+            
+            profile_info = {
+                'profile_id': str(token_info['profile_id']),
+                'profile_name': token_info['profile_name'],
+                'model_id': token_info['model_id']
+            }
+            
+            # Generate JWT token using JWTService
+            token_data = self.jwt_service.generate_token(
+                user_info=user_info,
+                profile_info=profile_info,
+                validity_period=validity_period,
+                audiences=['bedrock-proxy']
+            )
+            
+            new_token = token_data['jwt']
+            new_jti = token_data['jti']
+            
+            # Parse expires_at from token_data
             madrid_tz = pytz.timezone('Europe/Madrid')
             now = datetime.now(madrid_tz)
-            expires_at = now + timedelta(days=validity_days)
-            
-            # Generate JWT token
-            new_token = generate_jwt_token(
-                jti=new_jti,
-                user_id=str(user_id),
-                email=token_info['email'],
-                profile_id=str(token_info['profile_id']),
-                expires_at=expires_at
-            )
+            expires_at = datetime.fromisoformat(token_data['expires_at'].replace('Z', '+00:00')).astimezone(madrid_tz)
             
             # 8. Insert new token in database
             insert_query = """
                 INSERT INTO "identity-manager-tokens-tbl" (
-                    jti, user_id, profile_id, expires_at, created_at,
+                    jti, cognito_user_id, cognito_email, token_hash,
+                    application_profile_id, expires_at, issued_at,
                     regenerated_from_jti, regeneration_reason,
                     regeneration_client_ip, regeneration_user_agent
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
+            
+            # Generate token hash
+            import hashlib
+            token_hash = hashlib.sha256(new_token.encode()).hexdigest()
             
             self.db.execute_update(
                 insert_query,
                 (
                     new_jti,
-                    user_id,
+                    token_info['cognito_user_id'],
+                    token_info['email'],
+                    token_hash,
                     token_info['profile_id'],
                     expires_at,
                     now,
@@ -277,9 +329,12 @@ class TokenRegenerationService:
             # 10. Send email with new token
             email_sent = False
             try:
+                # Use person field if available, otherwise fallback to email
+                recipient_name = token_info.get('person') or token_info['email'].split('@')[0]
+                
                 email_sent = self.email.send_token_email(
                     recipient_email=token_info['email'],
-                    recipient_name=token_info['email'].split('@')[0],  # Simple name extraction
+                    recipient_name=recipient_name,
                     token=new_token,
                     token_info={
                         'profile': {

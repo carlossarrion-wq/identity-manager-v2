@@ -200,6 +200,19 @@ async function loadUsageData() {
             });
         });
         
+        // Filter out "unknown" from byTeam data
+        const filteredTeamData = {
+            labels: [],
+            values: []
+        };
+        
+        byTeamData.labels.forEach((label, index) => {
+            if (label.toLowerCase() !== 'unknown') {
+                filteredTeamData.labels.push(label);
+                filteredTeamData.values.push(byTeamData.values[index]);
+            }
+        });
+        
         // Update charts
         updateCharts({
             byHour: {
@@ -208,8 +221,8 @@ async function loadUsageData() {
                 peakHour: `${byHourData.peak_hour.hour} (${byHourData.peak_hour.requests.toLocaleString()} requests)`
             },
             byTeam: {
-                labels: byTeamData.labels,
-                data: byTeamData.values,
+                labels: filteredTeamData.labels,
+                data: filteredTeamData.values,
                 topTeam: `${byTeamData.top_team.name} (${byTeamData.top_team.percentage}%)`
             },
             byDay: {

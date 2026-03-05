@@ -807,6 +807,7 @@ function renderTokensPaginatedTable() {
             <td>${token.profile_name || '-'}</td>
             <td>${formatDate(token.created_at)}</td>
             <td>${formatDate(token.expires_at)}</td>
+            <td>${token.last_used_at ? formatDate(token.last_used_at) : '<span style="color: #999;">Never</span>'}</td>
             <td>${statusBadge}</td>
             <td>
                 <button class="btn-action btn-info" onclick="viewToken('${token.token_id}')" title="View Details">
@@ -830,8 +831,9 @@ function renderTokensPaginatedTable() {
                 `}
             </td>
         </tr>
-    `).join('');
-    
+    `;
+    }).join('');
+
     updateTokensPaginationControls();
 }
 

@@ -30,9 +30,9 @@ terraform/
 - **Encriptación** en reposo
 
 ### Inicialización Automática
-- Ejecución automática del esquema v2
-- Carga de datos iniciales (seeds)
-- Configuración de tablas y vistas
+- Ejecución automática del esquema completo (v5.0)
+- Carga de funciones, vistas y triggers
+- Inserción de datos iniciales (models, apps, config)
 
 ## 📋 Prerequisitos
 
@@ -83,12 +83,10 @@ Esto creará:
 1. RDS PostgreSQL instance
 2. Security groups y networking
 3. Secrets Manager con credenciales
-4. Ejecutará automáticamente:
-   - `identity_manager_schema_v2.sql`
-   - `insert_permission_types_v2.sql`
-   - `insert_applications_v2.sql`
-   - `insert_models_v2.sql`
-   - `insert_modules_v2.sql`
+4. Ejecutará automáticamente (desde `../../database/`):
+   - `01_schema.sql` - Tablas, índices, constraints
+   - `02_functions_views.sql` - Funciones, vistas, triggers
+   - `03_seed_data.sql` - Datos iniciales (models, apps, config)
 
 ### 5. Obtener Información
 
@@ -173,14 +171,36 @@ Si necesitas actualizar el esquema después del despliegue inicial:
 terraform taint module.rds.null_resource.init_database
 terraform apply
 
-# Opción 2: Ejecutar manualmente
+# Opción 2: Ejecutar manualmente los nuevos scripts
 SECRET=$(aws secretsmanager get-secret-value --secret-id $(terraform output -raw secret_name) --query SecretString --output text)
 DB_HOST=$(echo $SECRET | jq -r .host)
 DB_USER=$(echo $SECRET | jq -r .username)
 DB_PASS=$(echo $SECRET | jq -r .password)
 DB_NAME=$(echo $SECRET | jq -r .dbname)
 
-PGPASSWORD=$DB_PASS psql -h $DB_HOST -U $DB_USER -d $DB_NAME -f ../../../database/schema/identity_manager_schema_v2.sql
+# Ejecutar scripts en orden
+PGPASSWORD=$DB_PASS psql -h $DB_HOST -U $DB_USER -d $DB_NAME -f ../../database/01_schema.sql
+PGPASSWORD=$DB_PASS psql -h $DB_HOST -U $DB_USER -d $DB_NAME -f ../../database/02_functions_views.sql
+PGPASSWORD=$DB_PASS psql -h $DB_HOST -U $DB_USER -d $DB_NAME -f ../../database/03_seed_data.sql
+```
+
+## 📦 Lambda Packages
+
+El directorio `lambda-packages/` contiene los paquetes de deployment de las funciones Lambda:
+
+- Se mantienen las **últimas 5 versiones** para rollback
+- El symlink `identity-mgmt-api-lambda-latest.zip` apunta siempre a la versión más reciente
+- Los paquetes antiguos se limpian automáticamente para ahorrar espacio
+
+**Estructura:**
+```
+lambda-packages/
+├── identity-mgmt-api-lambda-20260304_110814.zip  # Más reciente
+├── identity-mgmt-api-lambda-20260304_110120.zip
+├── identity-mgmt-api-lambda-20260304_105252.zip
+├── identity-mgmt-api-lambda-20260304_102837.zip
+├── identity-mgmt-api-lambda-20260304_005811.zip
+└── identity-mgmt-api-lambda-latest.zip -> identity-mgmt-api-lambda-20260304_110814.zip
 ```
 
 ## 🗑️ Destruir Infraestructura

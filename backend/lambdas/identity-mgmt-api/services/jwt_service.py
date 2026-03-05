@@ -22,6 +22,7 @@ class JWTService:
     
     # Mapeo de períodos de validez a horas
     VALIDITY_PERIODS = {
+        '1_minute': 1/60,  # Para testing de regeneración automática
         '1_day': 24,
         '7_days': 168,
         '30_days': 720,
