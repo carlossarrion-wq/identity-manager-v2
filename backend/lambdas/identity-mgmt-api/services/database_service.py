@@ -714,3 +714,61 @@ class DatabaseService:
             logger.error(f"Error registrando auditoría: {e}")
             # No fallar la operación principal si falla la auditoría
             return False
+    
+    # ========================================================================
+    # OPERACIONES DE CUOTAS DE USUARIOS
+    # ========================================================================
+    
+    def get_user_quotas_today(self) -> List[Dict[str, Any]]:
+        """
+        Obtener cuotas de usuarios para el día actual
+        
+        Retorna información de cuotas incluyendo:
+        - Usuarios con uso en el día actual
+        - Peticiones realizadas hoy
+        - Límite diario establecido
+        - Estado (ACTIVE, BLOCKED, ADMIN_SAFE)
+        - Fecha de desbloqueo si aplica
+        
+        Returns:
+            Lista de diccionarios con información de cuotas
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            
+            query = """
+                SELECT 
+                    cognito_user_id,
+                    cognito_email,
+                    person,
+                    team,
+                    requests_today,
+                    COALESCE(daily_request_limit, 1000) as daily_limit,
+                    is_blocked,
+                    administrative_safe,
+                    blocked_until,
+                    CASE 
+                        WHEN administrative_safe = true THEN 'ADMIN_SAFE'
+                        WHEN is_blocked = true THEN 'BLOCKED'
+                        ELSE 'ACTIVE'
+                    END as status
+                FROM "bedrock-proxy-user-quotas-tbl"
+                WHERE quota_date = CURRENT_DATE
+                    AND requests_today > 0
+                ORDER BY requests_today DESC;
+            """
+            
+            cursor.execute(query)
+            quotas = cursor.fetchall()
+            
+            # Convertir a lista de diccionarios y formatear fechas
+            result = []
+            for quota in quotas:
+                quota_dict = dict(quota)
+                # Formatear blocked_until si existe
+                if quota_dict.get('blocked_until'):
+                    quota_dict['blocked_until'] = quota_dict['blocked_until'].isoformat()
+                result.append(quota_dict)
+            
+            logger.info(f"Retrieved {len(result)} user quotas for today")
+            return result

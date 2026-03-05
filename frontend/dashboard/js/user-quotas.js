@@ -1,0 +1,299 @@
+// ============================================================================
+// USER QUOTAS MANAGEMENT
+// ============================================================================
+
+// Global variables for quotas
+let quotasData = [];
+let filteredQuotasData = [];
+let quotasCurrentPage = 1;
+const quotasItemsPerPage = 10;
+
+// ============================================================================
+// LOAD USER QUOTAS DATA
+// ============================================================================
+
+async function loadUserQuotas() {
+    console.log('📊 Loading user quotas data...');
+    
+    try {
+        // Show loading state
+        const tbody = document.querySelector('#quotas-table tbody');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" style="text-align: center; padding: 2rem;">
+                    <div class="loading-spinner"></div>
+                    Loading quota data...
+                </td>
+            </tr>
+        `;
+        
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Fetch quotas data from API
+        const data = await api.getUserQuotasToday();
+        
+        if (data) {
+            quotasData = data;
+            filteredQuotasData = [...quotasData];
+            
+            // Update summary cards
+            updateQuotasSummary();
+            
+            // Display table
+            quotasCurrentPage = 1;
+            displayQuotasTable();
+            
+            console.log(`✅ Loaded ${quotasData.length} user quotas`);
+        } else {
+            throw new Error(response.message || 'Failed to load quotas data');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error loading quotas:', error);
+        
+        const tbody = document.querySelector('#quotas-table tbody');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" style="text-align: center; padding: 2rem; color: #e53e3e;">
+                    <strong>Error loading quota data</strong><br>
+                    <small>${error.message}</small>
+                </td>
+            </tr>
+        `;
+        
+        showNotification('Failed to load quota data: ' + error.message, 'error');
+    }
+}
+
+// ============================================================================
+// UPDATE SUMMARY CARDS
+// ============================================================================
+
+function updateQuotasSummary() {
+    // Calculate metrics
+    const activeUsers = quotasData.filter(q => q.requests_today > 0).length;
+    const blockedUsers = quotasData.filter(q => q.status === 'BLOCKED').length;
+    const adminSafeUsers = quotasData.filter(q => q.status === 'ADMIN_SAFE').length;
+    
+    const totalRequests = quotasData.reduce((sum, q) => sum + (q.requests_today || 0), 0);
+    const avgUsage = activeUsers > 0 ? Math.round(totalRequests / activeUsers) : 0;
+    
+    // Update DOM
+    document.getElementById('quotas-active-users').textContent = activeUsers;
+    document.getElementById('quotas-blocked-users').textContent = blockedUsers;
+    document.getElementById('quotas-admin-safe-users').textContent = adminSafeUsers;
+    document.getElementById('quotas-avg-usage').textContent = avgUsage;
+}
+
+// ============================================================================
+// DISPLAY QUOTAS TABLE
+// ============================================================================
+
+function displayQuotasTable() {
+    const tbody = document.querySelector('#quotas-table tbody');
+    const start = (quotasCurrentPage - 1) * quotasItemsPerPage;
+    const end = start + quotasItemsPerPage;
+    const pageData = filteredQuotasData.slice(start, end);
+    
+    if (pageData.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" style="text-align: center; padding: 2rem;">
+                    No quota data found for today
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = pageData.map(quota => {
+        const usagePercent = quota.daily_limit > 0 
+            ? Math.round((quota.requests_today / quota.daily_limit) * 100) 
+            : 0;
+        
+        const statusBadge = getStatusBadge(quota.status);
+        const usageBar = getUsageBar(usagePercent, quota.status);
+        const blockedUntil = quota.blocked_until || '-';
+        
+        return `
+            <tr>
+                <td><code>${quota.cognito_user_id.substring(0, 8)}...</code></td>
+                <td>${quota.cognito_email}</td>
+                <td>${quota.person || '-'}</td>
+                <td>${quota.team || '-'}</td>
+                <td style="text-align: right; font-weight: 600;">${quota.requests_today.toLocaleString()}</td>
+                <td style="text-align: right;">${quota.daily_limit.toLocaleString()}</td>
+                <td style="text-align: center;">
+                    ${usageBar}
+                </td>
+                <td style="text-align: center;">${statusBadge}</td>
+                <td style="text-align: center;">${blockedUntil}</td>
+            </tr>
+        `;
+    }).join('');
+    
+    updateQuotasPagination();
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+function getStatusBadge(status) {
+    const badges = {
+        'ACTIVE': '<span class="status-badge active">ACTIVE</span>',
+        'BLOCKED': '<span class="status-badge revoked">BLOCKED</span>',
+        'ADMIN_SAFE': '<span class="status-badge admin-safe">ADMIN SAFE</span>'
+    };
+    return badges[status] || '<span class="status-badge">UNKNOWN</span>';
+}
+
+function getUsageBar(percent, status) {
+    let color = '#38a169'; // Green
+    if (percent >= 90) color = '#e53e3e'; // Red
+    else if (percent >= 75) color = '#dd6b20'; // Orange
+    else if (percent >= 50) color = '#d69e2e'; // Yellow
+    
+    if (status === 'ADMIN_SAFE') {
+        color = '#805ad5'; // Purple for admin safe
+    }
+    
+    return `
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div style="flex: 1; background: #e2e8f0; border-radius: 4px; height: 8px; overflow: hidden;">
+                <div style="width: ${Math.min(percent, 100)}%; height: 100%; background: ${color}; transition: width 0.3s;"></div>
+            </div>
+            <span style="font-weight: 600; min-width: 45px; text-align: right;">${percent}%</span>
+        </div>
+    `;
+}
+
+// ============================================================================
+// FILTER AND SEARCH
+// ============================================================================
+
+function filterQuotasTable() {
+    const searchTerm = document.getElementById('quotas-search').value.toLowerCase();
+    
+    filteredQuotasData = quotasData.filter(quota => {
+        return (
+            quota.cognito_user_id.toLowerCase().includes(searchTerm) ||
+            quota.cognito_email.toLowerCase().includes(searchTerm) ||
+            (quota.person && quota.person.toLowerCase().includes(searchTerm)) ||
+            (quota.team && quota.team.toLowerCase().includes(searchTerm)) ||
+            quota.status.toLowerCase().includes(searchTerm)
+        );
+    });
+    
+    quotasCurrentPage = 1;
+    displayQuotasTable();
+}
+
+// ============================================================================
+// PAGINATION
+// ============================================================================
+
+function updateQuotasPagination() {
+    const totalPages = Math.ceil(filteredQuotasData.length / quotasItemsPerPage);
+    const start = (quotasCurrentPage - 1) * quotasItemsPerPage + 1;
+    const end = Math.min(quotasCurrentPage * quotasItemsPerPage, filteredQuotasData.length);
+    
+    document.getElementById('quotas-pagination-info').textContent = 
+        `Showing ${start}-${end} of ${filteredQuotasData.length} users`;
+    document.getElementById('quotas-current-page').textContent = quotasCurrentPage;
+    document.getElementById('quotas-total-pages').textContent = totalPages;
+    
+    document.getElementById('quotas-prev-page').disabled = quotasCurrentPage === 1;
+    document.getElementById('quotas-next-page').disabled = quotasCurrentPage === totalPages || totalPages === 0;
+}
+
+function previousQuotasPage() {
+    if (quotasCurrentPage > 1) {
+        quotasCurrentPage--;
+        displayQuotasTable();
+    }
+}
+
+function nextQuotasPage() {
+    const totalPages = Math.ceil(filteredQuotasData.length / quotasItemsPerPage);
+    if (quotasCurrentPage < totalPages) {
+        quotasCurrentPage++;
+        displayQuotasTable();
+    }
+}
+
+// ============================================================================
+// EXPORT TO CSV
+// ============================================================================
+
+function exportQuotasToCSV() {
+    console.log('📥 Exporting quotas to CSV...');
+    
+    try {
+        // CSV headers
+        const headers = [
+            'User ID',
+            'Email',
+            'Person',
+            'Team',
+            'Requests Today',
+            'Daily Limit',
+            'Usage %',
+            'Status',
+            'Blocked Until'
+        ];
+        
+        // CSV rows
+        const rows = filteredQuotasData.map(quota => {
+            const usagePercent = quota.daily_limit > 0 
+                ? Math.round((quota.requests_today / quota.daily_limit) * 100) 
+                : 0;
+            
+            return [
+                quota.cognito_user_id,
+                quota.cognito_email,
+                quota.person || '',
+                quota.team || '',
+                quota.requests_today,
+                quota.daily_limit,
+                usagePercent,
+                quota.status,
+                quota.blocked_until || ''
+            ];
+        });
+        
+        // Create CSV content
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n');
+        
+        // Create download link
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        const today = new Date().toISOString().split('T')[0];
+        link.setAttribute('href', url);
+        link.setAttribute('download', `user-quotas-${today}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showNotification('Quotas data exported successfully', 'success');
+        console.log('✅ CSV exported successfully');
+        
+    } catch (error) {
+        console.error('❌ Error exporting CSV:', error);
+        showNotification('Failed to export CSV: ' + error.message, 'error');
+    }
+}
+
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
+
+console.log('✅ User Quotas module loaded');

@@ -1354,6 +1354,16 @@ table td:nth-child(n+4) {
     color: #c05621;
 }
 
+.status-badge.admin-safe {
+    background: rgba(128, 90, 213, 0.1);
+    color: #6b46c1;
+}
+
+.status-badge.active {
+    background: rgba(56, 178, 172, 0.1);
+    color: #2c7a7b;
+}
+
 /* Form Styles */
 .form-group {
     margin-bottom: 1.5rem;

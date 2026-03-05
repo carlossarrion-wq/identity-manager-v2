@@ -181,6 +181,9 @@ def route_operation(operation: str, body: Dict[str, Any], request_id: str) -> Di
         'get_proxy_usage_response_status': handle_get_proxy_usage_response_status,
         'get_proxy_usage_trend': handle_get_proxy_usage_trend,
         'get_proxy_usage_by_user': handle_get_proxy_usage_by_user,
+        
+        # Operaciones de cuotas de usuarios
+        'get_user_quotas_today': handle_get_user_quotas_today,
     }
     
     handler = operations.get(operation)
@@ -1025,3 +1028,25 @@ def handle_get_proxy_usage_by_user(body: Dict[str, Any], request_id: str) -> Dic
     result = proxy_usage_service.get_usage_by_user(start_date, end_date, page, page_size)
     
     return {'success': True, 'data': result}
+
+
+# ============================================================================
+# HANDLERS DE OPERACIONES - CUOTAS DE USUARIOS
+# ============================================================================
+
+def handle_get_user_quotas_today(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """
+    Obtener cuotas de usuarios para el día actual
+    
+    Retorna información de cuotas incluyendo:
+    - Usuarios con uso en el día actual
+    - Peticiones realizadas hoy
+    - Límite diario establecido
+    - Estado (ACTIVE, BLOCKED, ADMIN_SAFE)
+    - Fecha de desbloqueo si aplica
+    """
+    logger.info(f"[{request_id}] Obteniendo cuotas de usuarios del día actual")
+    
+    result = database_service.get_user_quotas_today()
+    
+    return {'success': True, 'data': result, 'message': 'User quotas retrieved successfully'}

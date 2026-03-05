@@ -123,6 +123,9 @@ function showTab(tabId) {
     // Initialize Proxy Usage tab if selected
     if (tabId === 'proxy-usage-tab' && typeof initProxyUsage === 'function') {
         initProxyUsage();
+    } else if (tabId === 'user-quotas-tab' && typeof loadUserQuotas === 'function') {
+        // Load User Quotas data
+        loadUserQuotas();
     } else {
         // Load data for other tabs
         loadDashboardData();
