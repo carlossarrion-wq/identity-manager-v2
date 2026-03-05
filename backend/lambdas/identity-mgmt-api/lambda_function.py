@@ -1049,4 +1049,6 @@ def handle_get_user_quotas_today(body: Dict[str, Any], request_id: str) -> Dict[
     
     result = database_service.get_user_quotas_today()
     
-    return {'success': True, 'data': result, 'message': 'User quotas retrieved successfully'}
+    # build_response() ya envuelve el resultado en {success, data, timestamp}
+    # por lo que solo debemos devolver el array directamente
+    return result
