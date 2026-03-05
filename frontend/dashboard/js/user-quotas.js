@@ -33,9 +33,17 @@ async function loadUserQuotas() {
         // Fetch quotas data from API
         const data = await api.getUserQuotasToday();
         
+        console.log('🔍 DEBUG: Raw data from API:', data);
+        console.log('🔍 DEBUG: Is array?', Array.isArray(data));
+        console.log('🔍 DEBUG: Data type:', typeof data);
+        console.log('🔍 DEBUG: Data length:', data?.length);
+        
         // Ensure data is an array
         quotasData = Array.isArray(data) ? data : [];
         filteredQuotasData = [...quotasData];
+        
+        console.log('🔍 DEBUG: quotasData after assignment:', quotasData);
+        console.log('🔍 DEBUG: quotasData length:', quotasData.length);
         
         // Update summary cards
         updateQuotasSummary();
