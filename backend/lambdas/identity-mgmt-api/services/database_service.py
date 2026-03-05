@@ -776,3 +776,291 @@ class DatabaseService:
             
             logger.info(f"Retrieved {len(result)} user quotas for today")
             return result
+    
+    def block_user_quota(
+        self,
+        cognito_user_id: str,
+        blocked_until: str,
+        block_reason: str,
+        performed_by: str
+    ) -> Dict[str, Any]:
+        """
+        Bloquear manualmente a un usuario hasta una fecha específica
+        
+        Args:
+            cognito_user_id: ID del usuario en Cognito
+            blocked_until: Fecha/hora de fin de bloqueo (ISO 8601)
+            block_reason: Razón del bloqueo
+            performed_by: Email del administrador que realiza el bloqueo
+            
+        Returns:
+            Dict con información del usuario bloqueado
+            
+        Raises:
+            ValueError: Si el usuario no existe, ya está bloqueado o está en Admin-Safe
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            
+            # Verificar estado actual del usuario
+            check_query = """
+                SELECT cognito_user_id, cognito_email, person, team,
+                       is_blocked, administrative_safe
+                FROM "bedrock-proxy-user-quotas-tbl"
+                WHERE cognito_user_id = %s
+            """
+            cursor.execute(check_query, (cognito_user_id,))
+            user = cursor.fetchone()
+            
+            if not user:
+                raise ValueError(f"Usuario no encontrado: {cognito_user_id}")
+            
+            if user['is_blocked']:
+                raise ValueError("Usuario ya está bloqueado")
+            
+            if user['administrative_safe']:
+                raise ValueError("No se puede bloquear un usuario en Admin-Safe")
+            
+            # Bloquear usuario
+            update_query = """
+                UPDATE "bedrock-proxy-user-quotas-tbl"
+                SET is_blocked = true,
+                    blocked_at = CURRENT_TIMESTAMP,
+                    blocked_until = %s,
+                    blocked_by = %s,
+                    block_reason = %s,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE cognito_user_id = %s
+                RETURNING cognito_user_id, cognito_email, person, team,
+                          blocked_at, blocked_until, blocked_by, block_reason
+            """
+            
+            cursor.execute(update_query, (blocked_until, performed_by, block_reason, cognito_user_id))
+            result = cursor.fetchone()
+            
+            if not result:
+                raise ValueError("Error al bloquear usuario")
+            
+            # Registrar en historial
+            history_query = """
+                INSERT INTO "bedrock-proxy-quota-blocks-history-tbl"
+                (cognito_user_id, cognito_email, block_date, blocked_at, 
+                 blocked_until, unblock_type, requests_count, daily_limit,
+                 unblocked_by, unblock_reason, team, person)
+                SELECT 
+                    cognito_user_id, cognito_email, CURRENT_DATE, CURRENT_TIMESTAMP,
+                    %s, 'MANUAL_BLOCK', requests_today, daily_request_limit,
+                    %s, %s, team, person
+                FROM "bedrock-proxy-user-quotas-tbl"
+                WHERE cognito_user_id = %s
+            """
+            cursor.execute(history_query, (blocked_until, performed_by, block_reason, cognito_user_id))
+            
+            # Formatear resultado
+            result_dict = dict(result)
+            result_dict['status'] = 'BLOCKED'
+            result_dict['blocked_at'] = result_dict['blocked_at'].isoformat()
+            result_dict['blocked_until'] = result_dict['blocked_until'].isoformat()
+            
+            logger.info(f"User {cognito_user_id} blocked until {blocked_until} by {performed_by}")
+            return result_dict
+    
+    def unblock_user_quota(
+        self,
+        cognito_user_id: str,
+        unblock_reason: str,
+        performed_by: str
+    ) -> Dict[str, Any]:
+        """
+        Desbloquear manualmente a un usuario o quitar Admin-Safe
+        
+        Comportamiento:
+        - Si usuario está BLOCKED: quita el bloqueo
+        - Si usuario está ADMIN_SAFE: quita la protección
+        
+        Args:
+            cognito_user_id: ID del usuario en Cognito
+            unblock_reason: Razón del desbloqueo
+            performed_by: Email del administrador que realiza el desbloqueo
+            
+        Returns:
+            Dict con información del usuario desbloqueado
+            
+        Raises:
+            ValueError: Si el usuario no existe o no está bloqueado/admin-safe
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            
+            # Verificar estado actual del usuario
+            check_query = """
+                SELECT cognito_user_id, cognito_email, person, team,
+                       is_blocked, administrative_safe, blocked_until, block_reason
+                FROM "bedrock-proxy-user-quotas-tbl"
+                WHERE cognito_user_id = %s
+            """
+            cursor.execute(check_query, (cognito_user_id,))
+            user = cursor.fetchone()
+            
+            if not user:
+                raise ValueError(f"Usuario no encontrado: {cognito_user_id}")
+            
+            if not user['is_blocked'] and not user['administrative_safe']:
+                raise ValueError("Usuario no está bloqueado ni en Admin-Safe")
+            
+            previous_state = 'ADMIN_SAFE' if user['administrative_safe'] else 'BLOCKED'
+            
+            # Desbloquear usuario o quitar Admin-Safe
+            if user['is_blocked']:
+                # Desbloquear usuario BLOCKED
+                update_query = """
+                    UPDATE "bedrock-proxy-user-quotas-tbl"
+                    SET is_blocked = false,
+                        blocked_until = NULL,
+                        unblocked_at = CURRENT_TIMESTAMP,
+                        unblocked_by = %s,
+                        unblock_reason = %s,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE cognito_user_id = %s
+                    RETURNING cognito_user_id, cognito_email, person, team, unblocked_at
+                """
+                cursor.execute(update_query, (performed_by, unblock_reason, cognito_user_id))
+            else:
+                # Quitar Admin-Safe
+                update_query = """
+                    UPDATE "bedrock-proxy-user-quotas-tbl"
+                    SET administrative_safe = false,
+                        administrative_safe_set_by = NULL,
+                        administrative_safe_set_at = NULL,
+                        administrative_safe_reason = NULL,
+                        unblocked_at = CURRENT_TIMESTAMP,
+                        unblocked_by = %s,
+                        unblock_reason = %s,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE cognito_user_id = %s
+                    RETURNING cognito_user_id, cognito_email, person, team, unblocked_at
+                """
+                cursor.execute(update_query, (performed_by, unblock_reason, cognito_user_id))
+            
+            result = cursor.fetchone()
+            
+            if not result:
+                raise ValueError("Error al desbloquear usuario")
+            
+            # Registrar en historial
+            history_query = """
+                INSERT INTO "bedrock-proxy-quota-blocks-history-tbl"
+                (cognito_user_id, cognito_email, block_date, unblocked_at,
+                 unblock_type, requests_count, daily_limit,
+                 unblocked_by, unblock_reason, team, person)
+                SELECT 
+                    cognito_user_id, cognito_email, CURRENT_DATE, CURRENT_TIMESTAMP,
+                    %s, requests_today, daily_request_limit,
+                    %s, %s, team, person
+                FROM "bedrock-proxy-user-quotas-tbl"
+                WHERE cognito_user_id = %s
+            """
+            unblock_type = 'REMOVE_ADMIN_SAFE' if previous_state == 'ADMIN_SAFE' else 'MANUAL_UNBLOCK'
+            cursor.execute(history_query, (unblock_type, performed_by, unblock_reason, cognito_user_id))
+            
+            # Formatear resultado
+            result_dict = dict(result)
+            result_dict['status'] = 'ACTIVE'
+            result_dict['previous_state'] = previous_state
+            result_dict['unblocked_at'] = result_dict['unblocked_at'].isoformat()
+            result_dict['unblocked_by'] = performed_by
+            result_dict['unblock_reason'] = unblock_reason
+            
+            logger.info(f"User {cognito_user_id} unblocked (from {previous_state}) by {performed_by}")
+            return result_dict
+    
+    def set_admin_safe_quota(
+        self,
+        cognito_user_id: str,
+        admin_safe_reason: str,
+        performed_by: str
+    ) -> Dict[str, Any]:
+        """
+        Establecer protección Admin-Safe para un usuario
+        
+        Puede aplicarse a usuarios ACTIVE (protección preventiva) o BLOCKED (protección y desbloqueo).
+        Si el usuario está bloqueado, se desbloquea automáticamente al establecer Admin-Safe.
+        
+        Args:
+            cognito_user_id: ID del usuario en Cognito
+            admin_safe_reason: Razón para establecer Admin-Safe
+            performed_by: Email del administrador que realiza la operación
+            
+        Returns:
+            Dict con información del usuario protegido
+            
+        Raises:
+            ValueError: Si el usuario no existe o ya está en Admin-Safe
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            
+            # Verificar estado actual del usuario
+            check_query = """
+                SELECT cognito_user_id, cognito_email, person, team,
+                       is_blocked, administrative_safe
+                FROM "bedrock-proxy-user-quotas-tbl"
+                WHERE cognito_user_id = %s
+            """
+            cursor.execute(check_query, (cognito_user_id,))
+            user = cursor.fetchone()
+            
+            if not user:
+                raise ValueError(f"Usuario no encontrado: {cognito_user_id}")
+            
+            if user['administrative_safe']:
+                raise ValueError("Usuario ya está en Admin-Safe")
+            
+            previous_state = 'BLOCKED' if user['is_blocked'] else 'ACTIVE'
+            
+            # Establecer Admin-Safe (y desbloquear si estaba bloqueado)
+            update_query = """
+                UPDATE "bedrock-proxy-user-quotas-tbl"
+                SET administrative_safe = true,
+                    administrative_safe_set_by = %s,
+                    administrative_safe_set_at = CURRENT_TIMESTAMP,
+                    administrative_safe_reason = %s,
+                    is_blocked = false,
+                    blocked_until = NULL,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE cognito_user_id = %s
+                RETURNING cognito_user_id, cognito_email, person, team,
+                          administrative_safe_set_at, administrative_safe_set_by,
+                          administrative_safe_reason
+            """
+            
+            cursor.execute(update_query, (performed_by, admin_safe_reason, cognito_user_id))
+            result = cursor.fetchone()
+            
+            if not result:
+                raise ValueError("Error al establecer Admin-Safe")
+            
+            # Registrar en historial
+            history_query = """
+                INSERT INTO "bedrock-proxy-quota-blocks-history-tbl"
+                (cognito_user_id, cognito_email, block_date, unblocked_at,
+                 unblock_type, requests_count, daily_limit,
+                 unblocked_by, unblock_reason, team, person)
+                SELECT 
+                    cognito_user_id, cognito_email, CURRENT_DATE, CURRENT_TIMESTAMP,
+                    'SET_ADMIN_SAFE', requests_today, daily_request_limit,
+                    %s, %s, team, person
+                FROM "bedrock-proxy-user-quotas-tbl"
+                WHERE cognito_user_id = %s
+            """
+            cursor.execute(history_query, (performed_by, admin_safe_reason, cognito_user_id))
+            
+            # Formatear resultado
+            result_dict = dict(result)
+            result_dict['status'] = 'ADMIN_SAFE'
+            result_dict['previous_state'] = previous_state
+            result_dict['administrative_safe'] = True
+            result_dict['administrative_safe_set_at'] = result_dict['administrative_safe_set_at'].isoformat()
+            
+            logger.info(f"User {cognito_user_id} set to Admin-Safe (from {previous_state}) by {performed_by}")
+            return result_dict

@@ -184,6 +184,9 @@ def route_operation(operation: str, body: Dict[str, Any], request_id: str) -> Di
         
         # Operaciones de cuotas de usuarios
         'get_user_quotas_today': handle_get_user_quotas_today,
+        'block_user': handle_block_user,
+        'unblock_user': handle_unblock_user,
+        'set_admin_safe': handle_set_admin_safe,
     }
     
     handler = operations.get(operation)
@@ -1052,3 +1055,164 @@ def handle_get_user_quotas_today(body: Dict[str, Any], request_id: str) -> Dict[
     # build_response() ya envuelve el resultado en {success, data, timestamp}
     # por lo que solo debemos devolver el array directamente
     return result
+
+
+def handle_block_user(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """
+    Bloquear manualmente a un usuario hasta una fecha específica
+    
+    Args:
+        body: Datos del request con cognito_user_id, blocked_until, block_reason, performed_by
+        request_id: ID del request para logging
+        
+    Returns:
+        Dict con información del usuario bloqueado
+    """
+    logger.info(f"[{request_id}] Bloqueando usuario manualmente")
+    
+    data = body.get('data', {})
+    cognito_user_id = data.get('cognito_user_id')
+    blocked_until = data.get('blocked_until')
+    block_reason = data.get('block_reason')
+    performed_by = data.get('performed_by')
+    
+    if not all([cognito_user_id, blocked_until, block_reason, performed_by]):
+        raise ValueError('Los parámetros cognito_user_id, blocked_until, block_reason y performed_by son requeridos')
+    
+    # Bloquear usuario
+    result = database_service.block_user_quota(
+        cognito_user_id=cognito_user_id,
+        blocked_until=blocked_until,
+        block_reason=block_reason,
+        performed_by=performed_by
+    )
+    
+    # Registrar en auditoría
+    database_service.log_audit(
+        operation_type='BLOCK_USER_QUOTA',
+        resource_type='user_quota',
+        resource_id=cognito_user_id,
+        cognito_user_id=cognito_user_id,
+        cognito_email=result.get('cognito_email'),
+        new_value={
+            'status': 'BLOCKED',
+            'blocked_until': blocked_until,
+            'block_reason': block_reason,
+            'blocked_by': performed_by
+        },
+        request_id=request_id
+    )
+    
+    logger.info(f"[{request_id}] Usuario {cognito_user_id} bloqueado exitosamente")
+    
+    return {
+        'success': True,
+        'operation': 'block_user',
+        'user': result
+    }
+
+
+def handle_unblock_user(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """
+    Desbloquear manualmente a un usuario o quitar Admin-Safe
+    
+    Args:
+        body: Datos del request con cognito_user_id, unblock_reason, performed_by
+        request_id: ID del request para logging
+        
+    Returns:
+        Dict con información del usuario desbloqueado
+    """
+    logger.info(f"[{request_id}] Desbloqueando usuario manualmente")
+    
+    data = body.get('data', {})
+    cognito_user_id = data.get('cognito_user_id')
+    unblock_reason = data.get('unblock_reason')
+    performed_by = data.get('performed_by')
+    
+    if not all([cognito_user_id, unblock_reason, performed_by]):
+        raise ValueError('Los parámetros cognito_user_id, unblock_reason y performed_by son requeridos')
+    
+    # Desbloquear usuario
+    result = database_service.unblock_user_quota(
+        cognito_user_id=cognito_user_id,
+        unblock_reason=unblock_reason,
+        performed_by=performed_by
+    )
+    
+    # Registrar en auditoría
+    database_service.log_audit(
+        operation_type='UNBLOCK_USER_QUOTA',
+        resource_type='user_quota',
+        resource_id=cognito_user_id,
+        cognito_user_id=cognito_user_id,
+        cognito_email=result.get('cognito_email'),
+        new_value={
+            'status': 'ACTIVE',
+            'previous_state': result.get('previous_state'),
+            'unblock_reason': unblock_reason,
+            'unblocked_by': performed_by
+        },
+        request_id=request_id
+    )
+    
+    logger.info(f"[{request_id}] Usuario {cognito_user_id} desbloqueado exitosamente")
+    
+    return {
+        'success': True,
+        'operation': 'unblock_user',
+        'user': result
+    }
+
+
+def handle_set_admin_safe(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """
+    Establecer protección Admin-Safe para un usuario
+    
+    Args:
+        body: Datos del request con cognito_user_id, admin_safe_reason, performed_by
+        request_id: ID del request para logging
+        
+    Returns:
+        Dict con información del usuario protegido
+    """
+    logger.info(f"[{request_id}] Estableciendo Admin-Safe para usuario")
+    
+    data = body.get('data', {})
+    cognito_user_id = data.get('cognito_user_id')
+    admin_safe_reason = data.get('admin_safe_reason')
+    performed_by = data.get('performed_by')
+    
+    if not all([cognito_user_id, admin_safe_reason, performed_by]):
+        raise ValueError('Los parámetros cognito_user_id, admin_safe_reason y performed_by son requeridos')
+    
+    # Establecer Admin-Safe
+    result = database_service.set_admin_safe_quota(
+        cognito_user_id=cognito_user_id,
+        admin_safe_reason=admin_safe_reason,
+        performed_by=performed_by
+    )
+    
+    # Registrar en auditoría
+    database_service.log_audit(
+        operation_type='SET_ADMIN_SAFE_QUOTA',
+        resource_type='user_quota',
+        resource_id=cognito_user_id,
+        cognito_user_id=cognito_user_id,
+        cognito_email=result.get('cognito_email'),
+        new_value={
+            'status': 'ADMIN_SAFE',
+            'previous_state': result.get('previous_state'),
+            'admin_safe_reason': admin_safe_reason,
+            'administrative_safe_set_by': performed_by
+        },
+        request_id=request_id
+    )
+    
+    logger.info(f"[{request_id}] Usuario {cognito_user_id} establecido como Admin-Safe exitosamente")
+    
+    return {
+        'success': True,
+        'operation': 'set_admin_safe',
+        'user': result
+    }
