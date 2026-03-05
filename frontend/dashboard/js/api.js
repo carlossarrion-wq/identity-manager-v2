@@ -61,7 +61,9 @@ class IdentityManagerAPI {
                 throw error;
             }
 
-            console.log(`✅ API Response: ${operation}`, result.data);
+            console.log(`✅ API Response: ${operation}`, result);
+            console.log(`🔍 Returning result.data:`, result.data);
+            console.log(`🔍 result.data is array?`, Array.isArray(result.data));
             return result.data;
 
         } catch (error) {
