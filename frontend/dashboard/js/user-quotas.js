@@ -8,6 +8,9 @@ let filteredQuotasData = [];
 let quotasCurrentPage = 1;
 const quotasItemsPerPage = 10;
 
+// Selected user for modal operations
+let selectedQuotaUser = null;
+
 // ============================================================================
 // LOAD USER QUOTAS DATA
 // ============================================================================
@@ -20,7 +23,7 @@ async function loadUserQuotas() {
         const tbody = document.querySelector('#quotas-table tbody');
         tbody.innerHTML = `
             <tr>
-                <td colspan="9" style="text-align: center; padding: 2rem;">
+                <td colspan="10" style="text-align: center; padding: 2rem;">
                     <div class="loading-spinner"></div>
                     Loading quota data...
                 </td>
@@ -60,7 +63,7 @@ async function loadUserQuotas() {
         const tbody = document.querySelector('#quotas-table tbody');
         tbody.innerHTML = `
             <tr>
-                <td colspan="9" style="text-align: center; padding: 2rem; color: #e53e3e;">
+                <td colspan="10" style="text-align: center; padding: 2rem; color: #e53e3e;">
                     <strong>Error loading quota data</strong><br>
                     <small>${error.message}</small>
                 </td>
@@ -104,7 +107,7 @@ function displayQuotasTable() {
     if (pageData.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="9" style="text-align: center; padding: 2rem;">
+                <td colspan="10" style="text-align: center; padding: 2rem;">
                     No quota data found for today
                 </td>
             </tr>
@@ -119,7 +122,8 @@ function displayQuotasTable() {
         
         const statusBadge = getStatusBadge(quota.status);
         const usageBar = getUsageBar(usagePercent, quota.status);
-        const blockedUntil = quota.blocked_until || '-';
+        const blockedUntil = quota.blocked_until ? formatDateTime(quota.blocked_until) : '-';
+        const actionButtons = getActionButtons(quota);
         
         return `
             <tr>
@@ -133,7 +137,10 @@ function displayQuotasTable() {
                     ${usageBar}
                 </td>
                 <td style="text-align: center;">${statusBadge}</td>
-                <td style="text-align: center;">${blockedUntil}</td>
+                <td style="text-align: center; font-size: 0.85rem;">${blockedUntil}</td>
+                <td style="text-align: center;">
+                    ${actionButtons}
+                </td>
             </tr>
         `;
     }).join('');
@@ -172,6 +179,222 @@ function getUsageBar(percent, status) {
             <span style="font-weight: 600; min-width: 45px; text-align: right;">${percent}%</span>
         </div>
     `;
+}
+
+function getActionButtons(quota) {
+    const userId = quota.cognito_user_id;
+    const status = quota.status;
+    
+    let buttons = '<div style="display: flex; gap: 0.5rem; justify-content: center;">';
+    
+    if (status === 'ACTIVE') {
+        // Active users can be blocked or set to admin-safe
+        buttons += `
+            <button class="btn-action btn-block" onclick="showBlockUserModal('${userId}')" title="Block User">
+                🔒 Block
+            </button>
+            <button class="btn-action btn-admin-safe" onclick="showSetAdminSafeModal('${userId}')" title="Set Admin-Safe">
+                🛡️ Protect
+            </button>
+        `;
+    } else if (status === 'BLOCKED') {
+        // Blocked users can be unblocked or set to admin-safe
+        buttons += `
+            <button class="btn-action btn-unblock" onclick="showUnblockUserModal('${userId}')" title="Unblock User">
+                🔓 Unblock
+            </button>
+            <button class="btn-action btn-admin-safe" onclick="showSetAdminSafeModal('${userId}')" title="Set Admin-Safe">
+                🛡️ Protect
+            </button>
+        `;
+    } else if (status === 'ADMIN_SAFE') {
+        // Admin-safe users can only be unprotected
+        buttons += `
+            <button class="btn-action btn-unblock" onclick="showUnblockUserModal('${userId}')" title="Remove Protection">
+                🔓 Remove Protection
+            </button>
+        `;
+    }
+    
+    buttons += '</div>';
+    return buttons;
+}
+
+function formatDateTime(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleString('en-GB', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// ============================================================================
+// MODAL FUNCTIONS
+// ============================================================================
+
+function showBlockUserModal(userId) {
+    selectedQuotaUser = quotasData.find(q => q.cognito_user_id === userId);
+    if (!selectedQuotaUser) return;
+    
+    // Set default block until date (24 hours from now)
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const defaultDate = tomorrow.toISOString().slice(0, 16);
+    
+    document.getElementById('block-user-email').textContent = selectedQuotaUser.cognito_email;
+    document.getElementById('block-user-person').textContent = selectedQuotaUser.person || '-';
+    document.getElementById('block-user-team').textContent = selectedQuotaUser.team || '-';
+    document.getElementById('block-until-datetime').value = defaultDate;
+    document.getElementById('block-reason').value = '';
+    
+    document.getElementById('block-user-modal').style.display = 'flex';
+}
+
+function showUnblockUserModal(userId) {
+    selectedQuotaUser = quotasData.find(q => q.cognito_user_id === userId);
+    if (!selectedQuotaUser) return;
+    
+    document.getElementById('unblock-user-email').textContent = selectedQuotaUser.cognito_email;
+    document.getElementById('unblock-user-person').textContent = selectedQuotaUser.person || '-';
+    document.getElementById('unblock-user-team').textContent = selectedQuotaUser.team || '-';
+    document.getElementById('unblock-user-status').textContent = selectedQuotaUser.status;
+    
+    // Show additional info if blocked
+    const blockedInfo = document.getElementById('unblock-blocked-info');
+    if (selectedQuotaUser.status === 'BLOCKED') {
+        blockedInfo.style.display = 'block';
+        document.getElementById('unblock-blocked-until').textContent = 
+            selectedQuotaUser.blocked_until ? formatDateTime(selectedQuotaUser.blocked_until) : '-';
+        document.getElementById('unblock-block-reason').textContent = 
+            selectedQuotaUser.block_reason || '-';
+    } else {
+        blockedInfo.style.display = 'none';
+    }
+    
+    document.getElementById('unblock-reason').value = '';
+    
+    document.getElementById('unblock-user-modal').style.display = 'flex';
+}
+
+function showSetAdminSafeModal(userId) {
+    selectedQuotaUser = quotasData.find(q => q.cognito_user_id === userId);
+    if (!selectedQuotaUser) return;
+    
+    document.getElementById('admin-safe-user-email').textContent = selectedQuotaUser.cognito_email;
+    document.getElementById('admin-safe-user-person').textContent = selectedQuotaUser.person || '-';
+    document.getElementById('admin-safe-user-team').textContent = selectedQuotaUser.team || '-';
+    document.getElementById('admin-safe-user-status').textContent = selectedQuotaUser.status;
+    document.getElementById('admin-safe-reason').value = '';
+    
+    document.getElementById('admin-safe-modal').style.display = 'flex';
+}
+
+function closeBlockUserModal() {
+    document.getElementById('block-user-modal').style.display = 'none';
+    selectedQuotaUser = null;
+}
+
+function closeUnblockUserModal() {
+    document.getElementById('unblock-user-modal').style.display = 'none';
+    selectedQuotaUser = null;
+}
+
+function closeAdminSafeModal() {
+    document.getElementById('admin-safe-modal').style.display = 'none';
+    selectedQuotaUser = null;
+}
+
+// ============================================================================
+// MODAL ACTIONS (Placeholder - will connect to API later)
+// ============================================================================
+
+async function blockUser() {
+    if (!selectedQuotaUser) return;
+    
+    const blockedUntil = document.getElementById('block-until-datetime').value;
+    const reason = document.getElementById('block-reason').value.trim();
+    
+    // Validation
+    if (!blockedUntil) {
+        showNotification('Please select a block until date/time', 'error');
+        return;
+    }
+    
+    if (!reason) {
+        showNotification('Please provide a reason for blocking', 'error');
+        return;
+    }
+    
+    // Check if date is in the future
+    const blockDate = new Date(blockedUntil);
+    if (blockDate <= new Date()) {
+        showNotification('Block until date must be in the future', 'error');
+        return;
+    }
+    
+    console.log('🔒 Block user:', {
+        userId: selectedQuotaUser.cognito_user_id,
+        email: selectedQuotaUser.cognito_email,
+        blockedUntil,
+        reason
+    });
+    
+    // TODO: Call API to block user
+    showNotification('Block user functionality will be implemented soon', 'info');
+    
+    closeBlockUserModal();
+}
+
+async function unblockUser() {
+    if (!selectedQuotaUser) return;
+    
+    const reason = document.getElementById('unblock-reason').value.trim();
+    
+    // Validation
+    if (!reason) {
+        showNotification('Please provide a reason for unblocking', 'error');
+        return;
+    }
+    
+    console.log('🔓 Unblock user:', {
+        userId: selectedQuotaUser.cognito_user_id,
+        email: selectedQuotaUser.cognito_email,
+        currentStatus: selectedQuotaUser.status,
+        reason
+    });
+    
+    // TODO: Call API to unblock user
+    showNotification('Unblock user functionality will be implemented soon', 'info');
+    
+    closeUnblockUserModal();
+}
+
+async function setAdminSafe() {
+    if (!selectedQuotaUser) return;
+    
+    const reason = document.getElementById('admin-safe-reason').value.trim();
+    
+    // Validation
+    if (!reason) {
+        showNotification('Please provide a reason for setting Admin-Safe', 'error');
+        return;
+    }
+    
+    console.log('🛡️ Set Admin-Safe:', {
+        userId: selectedQuotaUser.cognito_user_id,
+        email: selectedQuotaUser.cognito_email,
+        currentStatus: selectedQuotaUser.status,
+        reason
+    });
+    
+    // TODO: Call API to set admin-safe
+    showNotification('Set Admin-Safe functionality will be implemented soon', 'info');
+    
+    closeAdminSafeModal();
 }
 
 // ============================================================================

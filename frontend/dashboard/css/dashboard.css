@@ -1588,6 +1588,52 @@ code {
     box-shadow: 0 0 0 3px rgba(49, 151, 149, 0.1);
 }
 
+/* User Quota Action Buttons */
+.btn-action.btn-block {
+    background: rgba(229, 62, 62, 0.1);
+    color: #c53030;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid rgba(229, 62, 62, 0.2);
+}
+
+.btn-action.btn-block:hover {
+    background: rgba(229, 62, 62, 0.2);
+    border-color: rgba(229, 62, 62, 0.3);
+    transform: translateY(-1px);
+}
+
+.btn-action.btn-unblock {
+    background: rgba(56, 178, 172, 0.1);
+    color: #2c7a7b;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid rgba(56, 178, 172, 0.2);
+}
+
+.btn-action.btn-unblock:hover {
+    background: rgba(56, 178, 172, 0.2);
+    border-color: rgba(56, 178, 172, 0.3);
+    transform: translateY(-1px);
+}
+
+.btn-action.btn-admin-safe {
+    background: rgba(128, 90, 213, 0.1);
+    color: #6b46c1;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid rgba(128, 90, 213, 0.2);
+}
+
+.btn-action.btn-admin-safe:hover {
+    background: rgba(128, 90, 213, 0.2);
+    border-color: rgba(128, 90, 213, 0.3);
+    transform: translateY(-1px);
+}
+
 @media (max-width: 768px) {
     .container {
         padding: 1rem;
@@ -1681,5 +1727,11 @@ code {
     
     .form-actions button {
         width: 100%;
+    }
+    
+    /* Mobile adjustments for quota action buttons */
+    .btn-action {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.6rem;
     }
 }

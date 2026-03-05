@@ -672,11 +672,12 @@
                                 <th>Usage %</th>
                                 <th>Status</th>
                                 <th>Blocked Until</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="9">
+                                <td colspan="10">
                                     <div class="loading-spinner"></div>
                                     Loading quota data...
                                 </td>
@@ -960,13 +961,183 @@
         </div>
     </div>
 
+    <!-- Block User Modal -->
+    <div id="block-user-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔒 Block User</h2>
+                <button class="modal-close" onclick="closeBlockUserModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-section">
+                    <h3 class="modal-section-title">User Information</h3>
+                    <div class="modal-info-grid">
+                        <div class="modal-info-item">
+                            <span class="modal-label">Email:</span>
+                            <span class="modal-value" id="block-user-email">-</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-label">Person:</span>
+                            <span class="modal-value" id="block-user-person">-</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-label">Team:</span>
+                            <span class="modal-value" id="block-user-team">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <form onsubmit="event.preventDefault(); blockUser();">
+                    <div class="form-group">
+                        <label for="block-until-datetime">Block Until: *</label>
+                        <input type="datetime-local" id="block-until-datetime" required>
+                        <small style="color: #666; font-size: 0.85rem; margin-top: 0.25rem; display: block;">
+                            User will be automatically unblocked at this date/time
+                        </small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="block-reason">Reason: *</label>
+                        <textarea id="block-reason" rows="3" required placeholder="e.g., Excessive usage - exceeded quota multiple times"></textarea>
+                    </div>
+                    
+                    <div class="alert warning" style="margin-top: 1rem;">
+                        <strong>⚠️ Warning:</strong> User will not be able to access the service until the specified date/time.
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeBlockUserModal()">Cancel</button>
+                        <button type="submit" class="btn-primary" style="background: #e53e3e;">Block User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unblock User Modal -->
+    <div id="unblock-user-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔓 Unblock User</h2>
+                <button class="modal-close" onclick="closeUnblockUserModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-section">
+                    <h3 class="modal-section-title">User Information</h3>
+                    <div class="modal-info-grid">
+                        <div class="modal-info-item">
+                            <span class="modal-label">Email:</span>
+                            <span class="modal-value" id="unblock-user-email">-</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-label">Person:</span>
+                            <span class="modal-value" id="unblock-user-person">-</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-label">Team:</span>
+                            <span class="modal-value" id="unblock-user-team">-</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-label">Current Status:</span>
+                            <span class="modal-value" id="unblock-user-status">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="unblock-blocked-info" class="modal-section" style="display: none;">
+                    <h3 class="modal-section-title">Block Information</h3>
+                    <div class="modal-info-grid">
+                        <div class="modal-info-item">
+                            <span class="modal-label">Blocked Until:</span>
+                            <span class="modal-value" id="unblock-blocked-until">-</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-label">Block Reason:</span>
+                            <span class="modal-value" id="unblock-block-reason">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <form onsubmit="event.preventDefault(); unblockUser();">
+                    <div class="form-group">
+                        <label for="unblock-reason">Unblock Reason: *</label>
+                        <textarea id="unblock-reason" rows="3" required placeholder="e.g., Review completed - usage normalized"></textarea>
+                    </div>
+                    
+                    <div class="alert success" style="margin-top: 1rem;">
+                        <strong>✅ Note:</strong> User will regain access immediately after unblocking.
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeUnblockUserModal()">Cancel</button>
+                        <button type="submit" class="btn-primary" style="background: #38a169;">Unblock User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Set Admin-Safe Modal -->
+    <div id="admin-safe-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🛡️ Set Admin-Safe Protection</h2>
+                <button class="modal-close" onclick="closeAdminSafeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-section">
+                    <h3 class="modal-section-title">User Information</h3>
+                    <div class="modal-info-grid">
+                        <div class="modal-info-item">
+                            <span class="modal-label">Email:</span>
+                            <span class="modal-value" id="admin-safe-user-email">-</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-label">Person:</span>
+                            <span class="modal-value" id="admin-safe-user-person">-</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-label">Team:</span>
+                            <span class="modal-value" id="admin-safe-user-team">-</span>
+                        </div>
+                        <div class="modal-info-item">
+                            <span class="modal-label">Current Status:</span>
+                            <span class="modal-value" id="admin-safe-user-status">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <form onsubmit="event.preventDefault(); setAdminSafe();">
+                    <div class="form-group">
+                        <label for="admin-safe-reason">Reason: *</label>
+                        <textarea id="admin-safe-reason" rows="3" required placeholder="e.g., VIP user - priority access required"></textarea>
+                    </div>
+                    
+                    <div class="alert info" style="margin-top: 1rem;">
+                        <strong>ℹ️ Admin-Safe users:</strong>
+                        <ul style="margin: 0.5rem 0 0 1.5rem; padding: 0;">
+                            <li>Are protected from automatic blocking</li>
+                            <li>Can exceed daily quotas</li>
+                            <li>Maintain access until midnight</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeAdminSafeModal()">Cancel</button>
+                        <button type="submit" class="btn-primary" style="background: #805ad5;">Set Admin-Safe</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Dashboard JavaScript -->
     <script src="js/config.js?v=20260305"></script>
     <script src="js/api.js?v=20260305-3"></script>
     <script src="js/dashboard.js?v=20260305"></script>
     <script src="js/permissions.js?v=20260305"></script>
     <script src="js/proxy-usage.js?v=20260305"></script>
-    <script src="js/user-quotas.js?v=20260305-2"></script>
+    <script src="js/user-quotas.js?v=20260305-4"></script>
     
     <script>
         // Initialize dashboard on load
