@@ -60,7 +60,24 @@ ON CONFLICT (name) DO UPDATE SET
     level = EXCLUDED.level;
 
 -- ============================================================================
--- 4. CONFIG - Configuración del sistema
+-- 4. PROFILES - Perfiles de inferencia
+-- ============================================================================
+
+INSERT INTO "identity-manager-profiles-tbl" (id, profile_name, cognito_group_name, application_id, model_id, model_arn, description, is_active)
+VALUES
+    ('00d339ff-acc0-4156-9566-8dba498d71ff', 'lcs-claude_sonnet_4_5-por-mule-cline-profile', 'lcs-por-mule-group', 'fdc63e70-8eb7-4bd7-86a6-3dca529f9dbe', '18f38b61-a891-437e-9002-88c7b8a20cc7', 'arn:aws:bedrock:eu-west-1:701055077130:application-inference-profile/83woaigck26w', 'Perfil de inferencia para el equipo LCS Portales Mulesoft usando Cline con Claude Sonnet 4.5', true),
+    ('dc1b3985-78df-4ef6-804a-2cfb50f7dee3', 'lcs-claude_sonnet_4_5-sdlc-gen-cline-profile', 'lcs-sdlc-gen-group', 'fdc63e70-8eb7-4bd7-86a6-3dca529f9dbe', '18f38b61-a891-437e-9002-88c7b8a20cc7', 'arn:aws:bedrock:eu-west-1:701055077130:application-inference-profile/invmw8994b4y', 'Perfil de inferencia para el equipo LCS SDLC Gen usando Cline con Claude Sonnet 4.5', true),
+    ('5d71458f-0d8e-4704-95af-4206180ce243', 'lcs-claude_sonnet_4_5-com-sisu-cline-profile', 'lcs-com-sisu-group', 'fdc63e70-8eb7-4bd7-86a6-3dca529f9dbe', '18f38b61-a891-437e-9002-88c7b8a20cc7', 'arn:aws:bedrock:eu-west-1:701055077130:application-inference-profile/hio2o5etdowi', 'Inference profile para equipo lcs-com-sisu-group usando Claude Sonnet 4.5 en Cline', true),
+    ('e2595b00-137b-49b4-b0f5-33b0b13b6838', 'lcs-claude_sonnet_4_5-por-dar-cline-profile', 'lcs-por-dar-group', 'fdc63e70-8eb7-4bd7-86a6-3dca529f9dbe', '18f38b61-a891-437e-9002-88c7b8a20cc7', 'arn:aws:bedrock:eu-west-1:701055077130:application-inference-profile/f2dps00210tz', 'Inference profile para equipo lcs-por-dar-group usando Claude Sonnet 4.5 en Cline', true)
+ON CONFLICT (cognito_group_name, application_id, model_id) DO UPDATE SET
+    profile_name = EXCLUDED.profile_name,
+    model_arn = EXCLUDED.model_arn,
+    description = EXCLUDED.description,
+    is_active = EXCLUDED.is_active,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- ============================================================================
+-- 5. CONFIG - Configuración del sistema
 -- ============================================================================
 
 INSERT INTO "identity-manager-config-tbl" (id, config_key, config_value, description, is_sensitive)
