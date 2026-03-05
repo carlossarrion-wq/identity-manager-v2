@@ -34,7 +34,8 @@ async function loadUserQuotas() {
         const data = await api.getUserQuotasToday();
         
         if (data) {
-            quotasData = data;
+            // Ensure data is an array
+            quotasData = Array.isArray(data) ? data : [];
             filteredQuotasData = [...quotasData];
             
             // Update summary cards
@@ -289,6 +290,20 @@ function exportQuotasToCSV() {
     } catch (error) {
         console.error('❌ Error exporting CSV:', error);
         showNotification('Failed to export CSV: ' + error.message, 'error');
+    }
+}
+
+// ============================================================================
+// NOTIFICATIONS
+// ============================================================================
+
+function showNotification(message, type) {
+    // Use the showAlert function from dashboard.js if available
+    if (typeof showAlert === 'function') {
+        showAlert(type, message);
+    } else {
+        // Fallback to console
+        console.log(`[${type.toUpperCase()}] ${message}`);
     }
 }
 
