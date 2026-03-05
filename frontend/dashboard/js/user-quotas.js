@@ -33,22 +33,18 @@ async function loadUserQuotas() {
         // Fetch quotas data from API
         const data = await api.getUserQuotasToday();
         
-        if (data) {
-            // Ensure data is an array
-            quotasData = Array.isArray(data) ? data : [];
-            filteredQuotasData = [...quotasData];
-            
-            // Update summary cards
-            updateQuotasSummary();
-            
-            // Display table
-            quotasCurrentPage = 1;
-            displayQuotasTable();
-            
-            console.log(`✅ Loaded ${quotasData.length} user quotas`);
-        } else {
-            throw new Error(response.message || 'Failed to load quotas data');
-        }
+        // Ensure data is an array
+        quotasData = Array.isArray(data) ? data : [];
+        filteredQuotasData = [...quotasData];
+        
+        // Update summary cards
+        updateQuotasSummary();
+        
+        // Display table
+        quotasCurrentPage = 1;
+        displayQuotasTable();
+        
+        console.log(`✅ Loaded ${quotasData.length} user quotas`);
         
     } catch (error) {
         console.error('❌ Error loading quotas:', error);
