@@ -754,6 +754,11 @@ class DatabaseService:
                     END as status
                 FROM "bedrock-proxy-user-quotas-tbl"
                 WHERE quota_date = CURRENT_DATE
+                    AND (
+                        is_blocked = true 
+                        OR administrative_safe = true 
+                        OR requests_today > 0
+                    )
                 ORDER BY requests_today DESC;
             """
             
