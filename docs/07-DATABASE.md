@@ -274,7 +274,7 @@ CREATE TABLE "bedrock-proxy-usage-tracking-tbl" (
 ```
 
 #### 2. bedrock-proxy-user-quotas-tbl
-Control de cuotas diarias por usuario con bloqueo automático.
+Control de cuotas diarias por usuario con bloqueo automático y manual.
 
 ```sql
 CREATE TABLE "bedrock-proxy-user-quotas-tbl" (
@@ -287,6 +287,11 @@ CREATE TABLE "bedrock-proxy-user-quotas-tbl" (
     is_blocked BOOLEAN NOT NULL DEFAULT false,
     blocked_at TIMESTAMP,
     blocked_until TIMESTAMP,
+    blocked_by VARCHAR(255),                    -- Email del admin que bloqueó
+    block_reason TEXT,                          -- Razón del bloqueo manual
+    unblocked_at TIMESTAMP,                     -- Timestamp del último desbloqueo
+    unblocked_by VARCHAR(255),                  -- Email del admin que desbloqueó
+    unblock_reason TEXT,                        -- Razón del desbloqueo
     administrative_safe BOOLEAN NOT NULL DEFAULT false,
     administrative_safe_set_by VARCHAR(255),
     administrative_safe_set_at TIMESTAMP,
@@ -298,6 +303,13 @@ CREATE TABLE "bedrock-proxy-user-quotas-tbl" (
     person VARCHAR(255)
 );
 ```
+
+**Campos de Gestión Manual (Migración 012 - 2026-03-05):**
+- `blocked_by`: Email del administrador que realizó el bloqueo manual
+- `block_reason`: Razón detallada del bloqueo manual
+- `unblocked_at`: Timestamp del último desbloqueo manual
+- `unblocked_by`: Email del administrador que realizó el desbloqueo
+- `unblock_reason`: Razón del desbloqueo manual
 
 #### 3. bedrock-proxy-quota-blocks-history-tbl
 Historial de bloqueos y desbloqueos de usuarios por cuota.

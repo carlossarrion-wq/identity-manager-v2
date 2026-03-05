@@ -763,30 +763,127 @@ Solo usuarios con permisos de administrador pueden:
 
 ---
 
-## Próximos Pasos
+## Estado de Implementación
 
-### Fase 1: Backend (Prioridad Alta)
-1. ✅ Crear migraciones de BD para nuevos campos
-2. ✅ Implementar handlers en `lambda_function.py`
-3. ✅ Implementar métodos en `database_service.py`
-4. ✅ Añadir validaciones de negocio
-5. ✅ Implementar registro en historial
-6. ✅ Añadir tests unitarios
+### ✅ Fase 0: Base de Datos (COMPLETADO - 2026-03-05)
 
-### Fase 2: Frontend (Prioridad Alta)
-1. ✅ Añadir botones de acción en tabla User Quotas
-2. ✅ Crear modales para cada operación
-3. ✅ Implementar llamadas a API
-4. ✅ Añadir validaciones de formulario
-5. ✅ Mostrar confirmaciones y errores
-6. ✅ Actualizar tabla después de operaciones
+**Migración SQL creada:** `database/migrations/012_add_quota_management_fields.sql`
 
-### Fase 3: Mejoras (Prioridad Media)
+**Campos añadidos a `bedrock-proxy-user-quotas-tbl`:**
+- `blocked_by` (VARCHAR 255): Email del admin que bloqueó
+- `block_reason` (TEXT): Razón del bloqueo manual
+- `unblocked_at` (TIMESTAMP): Timestamp del último desbloqueo
+- `unblocked_by` (VARCHAR 255): Email del admin que desbloqueó
+- `unblock_reason` (TEXT): Razón del desbloqueo
+
+**Para aplicar la migración:**
+```bash
+cd database/migrations
+
+# Opción 1: Usar el script interactivo
+./apply_012.sh
+
+# Opción 2: Aplicar directamente con psql
+psql -h <DB_HOST> -p 5432 -U <DB_USER> -d <DB_NAME> -f 012_add_quota_management_fields.sql
+```
+
+**Documentación actualizada:**
+- ✅ Esquema de BD actualizado en `docs/07-DATABASE.md`
+- ✅ Especificación completa en este documento
+
+---
+
+### ✅ Fase 1: Frontend UI (COMPLETADO - 2026-03-05)
+
+**Archivos modificados:**
+- `frontend/dashboard/index.html` - 3 modales añadidos
+- `frontend/dashboard/js/user-quotas.js` - Lógica de modales y validaciones
+- `frontend/dashboard/css/dashboard.css` - Estilos para botones y modales
+
+**Funcionalidades implementadas:**
+- ✅ Columna "Actions" en tabla User Quotas
+- ✅ Botones dinámicos según estado del usuario
+- ✅ Modal "Block User" con validaciones
+- ✅ Modal "Unblock User" 
+- ✅ Modal "Set Admin-Safe"
+- ✅ Validaciones de formulario (fechas futuras, campos requeridos)
+- ✅ Diseño responsive y centrado
+- ✅ Funciones placeholder para API (pendiente de conectar)
+
+---
+
+### ⏳ Fase 2: Backend API (PENDIENTE)
+
+**Tareas pendientes:**
+
+1. **Actualizar `database_service.py`:**
+   - Implementar `block_user_quota()`
+   - Implementar `unblock_user_quota()`
+   - Implementar `set_admin_safe_quota()`
+   - Añadir validaciones de estado
+   - Registrar en historial
+
+2. **Actualizar `lambda_function.py`:**
+   - Añadir handler `handle_block_user()`
+   - Añadir handler `handle_unblock_user()`
+   - Añadir handler `handle_set_admin_safe()`
+   - Routing de operaciones
+   - Manejo de errores
+
+3. **Testing:**
+   - Tests unitarios de database_service
+   - Tests de integración de Lambda
+   - Validación de transiciones de estado
+
+**Tiempo estimado:** 2-3 horas
+
+---
+
+### ⏳ Fase 3: Integración Frontend-Backend (PENDIENTE)
+
+**Tareas pendientes:**
+
+1. **Actualizar `api.js`:**
+   - Añadir método `blockUser()`
+   - Añadir método `unblockUser()`
+   - Añadir método `setAdminSafe()`
+
+2. **Actualizar `user-quotas.js`:**
+   - Conectar función `blockUser()` con API
+   - Conectar función `unblockUser()` con API
+   - Conectar función `setAdminSafe()` con API
+   - Implementar `getCurrentUserEmail()`
+   - Manejo de errores de API
+   - Actualización de tabla después de operaciones
+
+3. **Testing:**
+   - Pruebas end-to-end
+   - Verificar flujos completos
+   - Validar actualización de UI
+
+**Tiempo estimado:** 1 hora
+
+---
+
+### ⏳ Fase 4: Mejoras Futuras (BACKLOG)
+
 1. ⏳ Notificaciones por email a usuarios afectados
 2. ⏳ Dashboard de estadísticas de bloqueos
 3. ⏳ Exportar historial de operaciones
 4. ⏳ Filtros avanzados en historial
 5. ⏳ Alertas automáticas para administradores
+6. ⏳ Bloqueos programados (scheduled blocks)
+7. ⏳ Aprobación multi-admin para Admin-Safe
+
+---
+
+## Próximos Pasos Inmediatos
+
+1. **Aplicar migración SQL** en base de datos de desarrollo
+2. **Implementar backend** (Fase 2)
+3. **Conectar frontend con backend** (Fase 3)
+4. **Testing completo** del flujo end-to-end
+5. **Despliegue** en PRE y PRO
 
 ---
 
