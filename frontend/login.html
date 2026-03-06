@@ -546,11 +546,8 @@
         // ============================================================================
         // CONFIGURACIÓN DE REDIRECCIÓN POST-LOGIN
         // ============================================================================
-        // Cambia esta URL según tu entorno:
-        // - Desarrollo local (servidor desde raíz): '/identity-manager-v2/frontend/dashboard/index.html'
-        // - CloudFront/S3: '/dashboard/index.html' o 'https://tu-dominio.com/dashboard'
-        // - Producción: 'https://app.tudominio.com/dashboard'
-        const REDIRECT_URL = '/identity-manager-v2/frontend/dashboard/index.html';
+        // Ruta relativa al dashboard (desde login.html a dashboard/index.html)
+        const REDIRECT_URL = 'dashboard/index.html';
         // ============================================================================
         
         let tempEmail = '';
