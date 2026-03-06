@@ -574,10 +574,18 @@ class DatabaseService:
             )
             module_permissions_deleted = cursor.rowcount
             
+            # Eliminar cuotas de usuario
+            cursor.execute(
+                'DELETE FROM "bedrock-proxy-user-quotas-tbl" WHERE cognito_user_id = %s',
+                (user_id,)
+            )
+            quotas_deleted = cursor.rowcount
+            
             return {
                 'tokens_deleted': tokens_deleted,
                 'app_permissions_deleted': app_permissions_deleted,
-                'module_permissions_deleted': module_permissions_deleted
+                'module_permissions_deleted': module_permissions_deleted,
+                'quotas_deleted': quotas_deleted
             }
     
     # ========================================================================
