@@ -696,23 +696,20 @@
                 }
 
                 if (response.ok && responseData.success) {
-                    showAlert('success', 'Autenticación exitosa. Redirigiendo al sistema...');
-                    
                     // Guardar token y datos del usuario
                     localStorage.setItem('auth_token', responseData.token);
                     localStorage.setItem('user_data', JSON.stringify(responseData.user));
                     localStorage.setItem('token_expires_at', responseData.expiresAt);
                     
-                    // Redirigir a la herramienta después de 1.5 segundos
-                    setTimeout(() => {
-                        window.location.href = REDIRECT_URL;
-                    }, 1500);
+                    // Redirigir inmediatamente al dashboard
+                    window.location.href = REDIRECT_URL;
                 } else {
                     showAlert('error', responseData.message || 'Error en el login');
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '<span class="material-icons">email</span> Iniciar Sesión';
                 }
             } catch (error) {
                 showAlert('error', 'Error de conexión: ' + error.message);
-            } finally {
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = '<span class="material-icons">email</span> Iniciar Sesión';
             }
