@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Identidades - Login</title>
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            max-width: 500px;
+            width: 100%;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .login-header h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header p {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .login-body {
+            padding: 2.5rem 2rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-subtitle {
+            font-size: 0.875rem;
+            color: #718096;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert.show {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .alert-icon {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .alert-message {
+            font-size: 0.875rem;
+        }
+
+        .alert-error {
+            background: #fee;
+            color: #c53030;
+            border-left: 4px solid #e53e3e;
+        }
+
+        .alert-success {
+            background: #e6fffa;
+            color: #2c7a7b;
+            border-left: 4px solid #38b2ac;
+        }
+
+        .alert-warning {
+            background: #fffbeb;
+            color: #b7791f;
+            border-left: 4px solid #f6ad55;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #4a5568;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 12px;
+            color: #a0aec0;
+            pointer-events: none;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.875rem 1rem 0.875rem 2.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Roboto', sans-serif;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #319795;
+            box-shadow: 0 0 0 3px rgba(49, 151, 149, 0.1);
+        }
+
+        .form-group input:disabled {
+            background: #f7fafc;
+            cursor: not-allowed;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: #a0aec0;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .toggle-password:hover {
+            color: #4a5568;
+        }
+
+        .helper-text {
+            font-size: 0.75rem;
+            color: #718096;
+            margin-top: 0.5rem;
+        }
+
+        .helper-text.error {
+            color: #e53e3e;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(49, 151, 149, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(49, 151, 149, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 0.875rem;
+            background: transparent;
+            color: #319795;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 0.75rem;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(49, 151, 149, 0.1);
+        }
+
+        .btn-link {
+            background: none;
+            border: none;
+            color: #319795;
+            font-size: 0.875rem;
+            cursor: pointer;
+            text-decoration: none;
+            padding: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .btn-link:hover {
+            color: #2c7a7b;
+            text-decoration: underline;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .password-requirements {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .password-requirements-title {
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+        }
+
+        .requirement {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #718096;
+            margin: 0.25rem 0;
+        }
+
+        .requirement.met {
+            color: #38a169;
+        }
+
+        .requirement .material-icons {
+            font-size: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                max-width: 100%;
+            }
+
+            .login-header {
+                padding: 2rem 1.5rem;
+            }
+
+            .login-body {
+                padding: 2rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Gestión de Identidades</h1>
+            <p>Sistema de Gestión de Identidades y Credenciales AWS</p>
+        </div>
+
+        <div class="login-body">
+            <!-- Success Alert -->
+            <div class="alert alert-success" id="successAlert">
+                <span class="material-icons alert-icon">check_circle</span>
+                <div class="alert-content">
+                    <div class="alert-message" id="successMessage"></div>
+                </div>
+            </div>
+
+            <!-- Error Alert -->
+            <div class="alert alert-error" id="errorAlert">
+                <span class="material-icons alert-icon">error</span>
+                <div class="alert-content">
+                    <div class="alert-message" id="errorMessage"></div>
+                </div>
+            </div>
+
+            <!-- Warning Alert (for password change) -->
+            <div class="alert alert-warning" id="warningAlert">
+                <span class="material-icons alert-icon">warning</span>
+                <div class="alert-content">
+                    <div class="alert-title">Cambio de Contraseña Requerido</div>
+                    <div class="alert-message">Su contraseña actual es temporal. Por motivos de seguridad, debe establecer una contraseña permanente antes de continuar.</div>
+                </div>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm">
+                <h2 class="section-title">Iniciar Sesión</h2>
+                <p class="section-subtitle">Introduce tu email y contraseña para acceder al sistema.</p>
+
+                <form id="loginFormElement">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <div class="input-wrapper">
+                            <span class="material-icons input-icon">email</span>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                placeholder="tu@email.com" 
+                                required 
+                                autofocus
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Contraseña</label>
+                        <div class="input-wrapper">
+                            <span class="material-icons input-icon">lock</span>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                placeholder="••••••••" 
+                                required
+                            >
+                            <button type="button" class="toggle-password" onclick="togglePassword('password')">
+                                <span class="material-icons" id="password-icon">visibility</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary" id="loginBtn">
+                        <span class="material-icons">email</span>
+                        Iniciar Sesión
+                    </button>
+                </form>
+            </div>
+
+            <!-- Password Change Form -->
+            <div id="passwordChangeForm" style="display: none;">
+                <h2 class="section-title">Cambiar Contraseña</h2>
+
+                <div class="form-group">
+                    <label for="email-display">Email</label>
+                    <div class="input-wrapper">
+                        <span class="material-icons input-icon">email</span>
+                        <input 
+                            type="email" 
+                            id="email-display" 
+                            disabled
+                        >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="newPassword">Nueva Contraseña</label>
+                    <div class="input-wrapper">
+                        <span class="material-icons input-icon">lock</span>
+                        <input 
+                            type="password" 
+                            id="newPassword" 
+                            placeholder="Mínimo 8 caracteres"
+                        >
+                        <button type="button" class="toggle-password" onclick="togglePassword('newPassword')">
+                            <span class="material-icons" id="newPassword-icon">visibility</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirmar Nueva Contraseña</label>
+                    <div class="input-wrapper">
+                        <span class="material-icons input-icon">lock</span>
+                        <input 
+                            type="password" 
+                            id="confirmPassword" 
+                            placeholder="Repite la contraseña"
+                        >
+                        <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword')">
+                            <span class="material-icons" id="confirmPassword-icon">visibility</span>
+                        </button>
+                    </div>
+                    <div class="helper-text error" id="passwordMatchError" style="display: none;">
+                        Las contraseñas no coinciden
+                    </div>
+                </div>
+
+                <div class="password-requirements">
+                    <div class="password-requirements-title">Requisitos de contraseña:</div>
+                    <div class="requirement" id="req-length">
+                        <span class="material-icons">radio_button_unchecked</span>
+                        <span>Mínimo 8 caracteres</span>
+                    </div>
+                    <div class="requirement" id="req-uppercase">
+                        <span class="material-icons">radio_button_unchecked</span>
+                        <span>Al menos una mayúscula</span>
+                    </div>
+                    <div class="requirement" id="req-lowercase">
+                        <span class="material-icons">radio_button_unchecked</span>
+                        <span>Al menos una minúscula</span>
+                    </div>
+                    <div class="requirement" id="req-number">
+                        <span class="material-icons">radio_button_unchecked</span>
+                        <span>Al menos un número</span>
+                    </div>
+                    <div class="requirement" id="req-special">
+                        <span class="material-icons">radio_button_unchecked</span>
+                        <span>Al menos un carácter especial</span>
+                    </div>
+                </div>
+
+                <button type="button" class="btn-primary" id="changePasswordBtn" onclick="handlePasswordChange()">
+                    <span class="material-icons">lock</span>
+                    Cambiar Contraseña
+                </button>
+
+                <button type="button" class="btn-secondary" onclick="cancelPasswordChange()">
+                    Cancelar
+                </button>
+            </div>
+
+            <!-- User Info (shown after successful login) -->
+            <div id="userInfo" style="display: none;">
+                <h2 class="section-title">Sesión Iniciada</h2>
+                
+                <div style="background: #f7fafc; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #718096; font-weight: 500;">Usuario:</span>
+                        <span style="color: #2d3748;" id="userName"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #718096; font-weight: 500;">Email:</span>
+                        <span style="color: #2d3748;" id="userEmail"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0;">
+                        <span style="color: #718096; font-weight: 500;">Token expira:</span>
+                        <span style="color: #2d3748;" id="tokenExpiry"></span>
+                    </div>
+                </div>
+
+                <details style="background: #f7fafc; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid #319795;">
+                    <summary style="cursor: pointer; font-weight: 500; color: #2d3748; padding: 0.5rem;">
+                        Ver Token JWT
+                    </summary>
+                    <pre id="tokenDisplay" style="background: white; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.75rem; margin-top: 1rem; max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0;"></pre>
+                </details>
+
+                <details style="background: #f7fafc; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid #319795;">
+                    <summary style="cursor: pointer; font-weight: 500; color: #2d3748; padding: 0.5rem;">
+                        Ver Permisos (<span id="permissionsCount">0</span>)
+                    </summary>
+                    <pre id="permissionsDisplay" style="background: white; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.75rem; margin-top: 1rem; max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0;"></pre>
+                </details>
+
+                <button type="button" class="btn-primary" onclick="logout()" style="background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);">
+                    <span class="material-icons">logout</span>
+                    Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://qw4ech2k0e.execute-api.eu-west-1.amazonaws.com';
+        // UUID de la aplicación en la tabla identity-manager-applications-tbl
+        const APP_ID = 'e61e1af9-8992-4bdf-be65-9cad86f34da0'; // identity-mgmt
+        
+        // ============================================================================
+        // CONFIGURACIÓN DE REDIRECCIÓN POST-LOGIN
+        // ============================================================================
+        // Cambia esta URL según tu entorno:
+        // - Desarrollo local (servidor desde raíz): '/identity-manager-v2/frontend/dashboard/index.html'
+        // - CloudFront/S3: '/dashboard/index.html' o 'https://tu-dominio.com/dashboard'
+        // - Producción: 'https://app.tudominio.com/dashboard'
+        const REDIRECT_URL = '/identity-manager-v2/frontend/dashboard/index.html';
+        // ============================================================================
+        
+        let tempEmail = '';
+        let tempPassword = '';
+
+        // Toggle password visibility
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = document.getElementById(fieldId + '-icon');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.textContent = 'visibility_off';
+            } else {
+                field.type = 'password';
+                icon.textContent = 'visibility';
+            }
+        }
+
+        // Show/hide alerts
+        function showAlert(type, message) {
+            hideAlerts();
+            const alert = document.getElementById(type + 'Alert');
+            const messageEl = document.getElementById(type + 'Message');
+            
+            if (messageEl) {
+                messageEl.textContent = message;
+            }
+            alert.classList.add('show');
+        }
+
+        function hideAlerts() {
+            document.querySelectorAll('.alert').forEach(alert => {
+                alert.classList.remove('show');
+            });
+        }
+
+        // Validate password requirements
+        function validatePassword(password) {
+            const requirements = {
+                length: password.length >= 8,
+                uppercase: /[A-Z]/.test(password),
+                lowercase: /[a-z]/.test(password),
+                number: /\d/.test(password),
+                special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+            };
+
+            // Update UI
+            updateRequirement('req-length', requirements.length);
+            updateRequirement('req-uppercase', requirements.uppercase);
+            updateRequirement('req-lowercase', requirements.lowercase);
+            updateRequirement('req-number', requirements.number);
+            updateRequirement('req-special', requirements.special);
+
+            return Object.values(requirements).every(req => req);
+        }
+
+        function updateRequirement(id, met) {
+            const element = document.getElementById(id);
+            const icon = element.querySelector('.material-icons');
+            
+            if (met) {
+                element.classList.add('met');
+                icon.textContent = 'check_circle';
+            } else {
+                element.classList.remove('met');
+                icon.textContent = 'radio_button_unchecked';
+            }
+        }
+
+        // Check password match
+        function checkPasswordMatch() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const errorEl = document.getElementById('passwordMatchError');
+            
+            if (confirmPassword && newPassword !== confirmPassword) {
+                errorEl.style.display = 'block';
+                return false;
+            } else {
+                errorEl.style.display = 'none';
+                return true;
+            }
+        }
+
+        // Listen to password input
+        document.addEventListener('DOMContentLoaded', () => {
+            const newPasswordField = document.getElementById('newPassword');
+            const confirmPasswordField = document.getElementById('confirmPassword');
+            
+            if (newPasswordField) {
+                newPasswordField.addEventListener('input', (e) => {
+                    validatePassword(e.target.value);
+                });
+            }
+            
+            if (confirmPasswordField) {
+                confirmPasswordField.addEventListener('input', checkPasswordMatch);
+            }
+        });
+
+        // Handle login form submission
+        document.getElementById('loginFormElement').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideAlerts();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+
+            if (!email || !password) {
+                showAlert('error', 'Por favor, complete todos los campos requeridos para continuar.');
+                return;
+            }
+
+            // Disable button and show loading
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<span class="spinner"></span> Autenticando...';
+
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        email, 
+                        password,
+                        app_id: APP_ID  // Validar permiso para esta aplicación
+                    })
+                });
+
+                const data = await response.json();
+                const responseData = data.data || data;
+
+                // Check if password change is required
+                if (responseData.requiresPasswordChange) {
+                    tempEmail = email;
+                    tempPassword = password;
+                    showPasswordChangeForm();
+                    return;
+                }
+
+                // Manejar error 403 (sin permisos)
+                if (response.status === 403) {
+                    showAlert('error', 'Acceso denegado. No dispone de los permisos necesarios para acceder a esta aplicación. Por favor, contacte con el administrador del sistema.');
+                    return;
+                }
+
+                if (response.ok && responseData.success) {
+                    showAlert('success', 'Autenticación exitosa. Redirigiendo al sistema...');
+                    
+                    // Guardar token y datos del usuario
+                    localStorage.setItem('auth_token', responseData.token);
+                    localStorage.setItem('user_data', JSON.stringify(responseData.user));
+                    localStorage.setItem('token_expires_at', responseData.expiresAt);
+                    
+                    // Redirigir a la herramienta después de 1.5 segundos
+                    setTimeout(() => {
+                        window.location.href = REDIRECT_URL;
+                    }, 1500);
+                } else {
+                    showAlert('error', responseData.message || 'Error en el login');
+                }
+            } catch (error) {
+                showAlert('error', 'Error de conexión: ' + error.message);
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<span class="material-icons">email</span> Iniciar Sesión';
+            }
+        });
+
+        // Show password change form
+        function showPasswordChangeForm() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('passwordChangeForm').style.display = 'block';
+            document.getElementById('email-display').value = tempEmail;
+            document.getElementById('warningAlert').classList.add('show');
+            hideAlerts();
+            document.getElementById('warningAlert').classList.add('show');
+        }
+
+        // Cancel password change
+        function cancelPasswordChange() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('passwordChangeForm').style.display = 'none';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            tempEmail = '';
+            tempPassword = '';
+            hideAlerts();
+        }
+
+        // Handle password change
+        async function handlePasswordChange() {
+            hideAlerts();
+            
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const changeBtn = document.getElementById('changePasswordBtn');
+
+            if (!newPassword || !confirmPassword) {
+                showAlert('error', 'Debe completar ambos campos de contraseña para continuar.');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showAlert('error', 'Las contraseñas introducidas no coinciden. Por favor, verifique e intente nuevamente.');
+                return;
+            }
+
+            if (!validatePassword(newPassword)) {
+                showAlert('error', 'La contraseña no cumple con los requisitos de seguridad establecidos. Por favor, revise los criterios indicados.');
+                return;
+            }
+
+            // Disable button and show loading
+            changeBtn.disabled = true;
+            changeBtn.innerHTML = '<span class="spinner"></span> Cambiando Contraseña...';
+
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: tempEmail,
+                        password: tempPassword,
+                        new_password: newPassword,
+                        app_id: APP_ID  // Validar permiso para esta aplicación
+                    })
+                });
+
+                const data = await response.json();
+                const responseData = data.data || data;
+
+                if (response.ok && responseData.success) {
+                    // Limpiar campos
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                    
+                    // Volver al formulario de login
+                    document.getElementById('passwordChangeForm').style.display = 'none';
+                    document.getElementById('loginForm').style.display = 'block';
+                    
+                    // Limpiar contraseña temporal
+                    document.getElementById('password').value = '';
+                    tempPassword = '';
+                    
+                    // Mostrar mensaje de éxito
+                    showAlert('success', 'Contraseña actualizada correctamente. Por favor, inicie sesión con su nueva contraseña.');
+                } else {
+                    showAlert('error', responseData.message || 'Error al cambiar contraseña');
+                }
+            } catch (error) {
+                showAlert('error', 'Error de conexión: ' + error.message);
+            } finally {
+                changeBtn.disabled = false;
+                changeBtn.innerHTML = '<span class="material-icons">lock</span> Cambiar Contraseña';
+            }
+        }
+
+    </script>
+</body>
+</html>

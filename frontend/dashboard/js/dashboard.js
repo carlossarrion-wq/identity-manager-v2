@@ -585,9 +585,21 @@ function showAlert(type, message) {
 }
 
 function logout() {
-    if (confirm('Are you sure you want to logout?')) {
-        window.location.href = 'login.html';
-    }
+    // Show logout confirmation modal
+    document.getElementById('logout-modal').style.display = 'flex';
+}
+
+function closeLogoutModal() {
+    document.getElementById('logout-modal').style.display = 'none';
+}
+
+function confirmLogout() {
+    // Clear authentication token
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_data');
+    
+    // Redirect to login page
+    window.location.href = 'login.html';
 }
 
 // ============================================================================

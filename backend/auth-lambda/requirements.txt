@@ -1,0 +1,19 @@
+# Requirements for Auth Lambda
+# ============================
+
+# AWS SDK (ya incluido en Lambda runtime, pero especificamos versión)
+boto3==1.42.59
+botocore==1.42.59
+
+# JWT
+PyJWT==2.11.0
+cryptography==42.0.5
+
+# Database
+psycopg2-binary==2.9.9
+
+# Utilities
+python-dateutil==2.9.0
+
+# AMS Logging Policy
+python-json-logger>=2.0.0
