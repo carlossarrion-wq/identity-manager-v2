@@ -1,0 +1,8 @@
+{
+  "Variables": {
+    "COGNITO_USER_POOL_ID": "eu-west-1_UaMIbG9pD",
+    "COGNITO_CLIENT_ID": "15b1ub3navqgh0ushcqo2ngfsk",
+    "JWT_SECRET_NAME": "identity-mgmt-dev-login-key-access",
+    "DB_SECRET_NAME": "identity-mgmt-dev-db-admin"
+  }
+}
