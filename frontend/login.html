@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Identidades - Login</title>
+    <title>Identity Manager - Login</title>
     
     <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -260,22 +260,6 @@
             background: rgba(49, 151, 149, 0.1);
         }
 
-        .btn-link {
-            background: none;
-            border: none;
-            color: #319795;
-            font-size: 0.875rem;
-            cursor: pointer;
-            text-decoration: none;
-            padding: 0.5rem;
-            transition: all 0.2s;
-        }
-
-        .btn-link:hover {
-            color: #2c7a7b;
-            text-decoration: underline;
-        }
-
         .spinner {
             display: inline-block;
             width: 20px;
@@ -339,8 +323,8 @@
 <body>
     <div class="login-container">
         <div class="login-header">
-            <h1>Gestión de Identidades</h1>
-            <p>Sistema de Gestión de Identidades y Credenciales AWS</p>
+            <h1>Identity Manager</h1>
+            <p>AWS Identity and Credentials Management System</p>
         </div>
 
         <div class="login-body">
@@ -364,15 +348,15 @@
             <div class="alert alert-warning" id="warningAlert">
                 <span class="material-icons alert-icon">warning</span>
                 <div class="alert-content">
-                    <div class="alert-title">Cambio de Contraseña Requerido</div>
-                    <div class="alert-message">Su contraseña actual es temporal. Por motivos de seguridad, debe establecer una contraseña permanente antes de continuar.</div>
+                    <div class="alert-title">Password Change Required</div>
+                    <div class="alert-message">Your current password is temporary. For security reasons, you must set a permanent password before continuing.</div>
                 </div>
             </div>
 
             <!-- Login Form -->
             <div id="loginForm">
-                <h2 class="section-title">Iniciar Sesión</h2>
-                <p class="section-subtitle">Introduce tu email y contraseña para acceder al sistema.</p>
+                <h2 class="section-title">Sign In</h2>
+                <p class="section-subtitle">Enter your email and password to access the system.</p>
 
                 <form id="loginFormElement">
                     <div class="form-group">
@@ -383,7 +367,7 @@
                                 type="email" 
                                 id="email" 
                                 name="email" 
-                                placeholder="tu@email.com" 
+                                placeholder="your@email.com" 
                                 required 
                                 autofocus
                             >
@@ -391,7 +375,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="password">Contraseña</label>
+                        <label for="password">Password</label>
                         <div class="input-wrapper">
                             <span class="material-icons input-icon">lock</span>
                             <input 
@@ -408,15 +392,15 @@
                     </div>
 
                     <button type="submit" class="btn-primary" id="loginBtn">
-                        <span class="material-icons">email</span>
-                        Iniciar Sesión
+                        <span class="material-icons">login</span>
+                        Sign In
                     </button>
                 </form>
             </div>
 
             <!-- Password Change Form -->
             <div id="passwordChangeForm" style="display: none;">
-                <h2 class="section-title">Cambiar Contraseña</h2>
+                <h2 class="section-title">Change Password</h2>
 
                 <div class="form-group">
                     <label for="email-display">Email</label>
@@ -431,13 +415,13 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="newPassword">Nueva Contraseña</label>
+                    <label for="newPassword">New Password</label>
                     <div class="input-wrapper">
                         <span class="material-icons input-icon">lock</span>
                         <input 
                             type="password" 
                             id="newPassword" 
-                            placeholder="Mínimo 8 caracteres"
+                            placeholder="Minimum 8 characters"
                         >
                         <button type="button" class="toggle-password" onclick="togglePassword('newPassword')">
                             <span class="material-icons" id="newPassword-icon">visibility</span>
@@ -446,93 +430,54 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="confirmPassword">Confirmar Nueva Contraseña</label>
+                    <label for="confirmPassword">Confirm New Password</label>
                     <div class="input-wrapper">
                         <span class="material-icons input-icon">lock</span>
                         <input 
                             type="password" 
                             id="confirmPassword" 
-                            placeholder="Repite la contraseña"
+                            placeholder="Repeat password"
                         >
                         <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword')">
                             <span class="material-icons" id="confirmPassword-icon">visibility</span>
                         </button>
                     </div>
                     <div class="helper-text error" id="passwordMatchError" style="display: none;">
-                        Las contraseñas no coinciden
+                        Passwords do not match
                     </div>
                 </div>
 
                 <div class="password-requirements">
-                    <div class="password-requirements-title">Requisitos de contraseña:</div>
+                    <div class="password-requirements-title">Password requirements:</div>
                     <div class="requirement" id="req-length">
                         <span class="material-icons">radio_button_unchecked</span>
-                        <span>Mínimo 8 caracteres</span>
+                        <span>Minimum 8 characters</span>
                     </div>
                     <div class="requirement" id="req-uppercase">
                         <span class="material-icons">radio_button_unchecked</span>
-                        <span>Al menos una mayúscula</span>
+                        <span>At least one uppercase letter</span>
                     </div>
                     <div class="requirement" id="req-lowercase">
                         <span class="material-icons">radio_button_unchecked</span>
-                        <span>Al menos una minúscula</span>
+                        <span>At least one lowercase letter</span>
                     </div>
                     <div class="requirement" id="req-number">
                         <span class="material-icons">radio_button_unchecked</span>
-                        <span>Al menos un número</span>
+                        <span>At least one number</span>
                     </div>
                     <div class="requirement" id="req-special">
                         <span class="material-icons">radio_button_unchecked</span>
-                        <span>Al menos un carácter especial</span>
+                        <span>At least one special character</span>
                     </div>
                 </div>
 
                 <button type="button" class="btn-primary" id="changePasswordBtn" onclick="handlePasswordChange()">
                     <span class="material-icons">lock</span>
-                    Cambiar Contraseña
+                    Change Password
                 </button>
 
                 <button type="button" class="btn-secondary" onclick="cancelPasswordChange()">
-                    Cancelar
-                </button>
-            </div>
-
-            <!-- User Info (shown after successful login) -->
-            <div id="userInfo" style="display: none;">
-                <h2 class="section-title">Sesión Iniciada</h2>
-                
-                <div style="background: #f7fafc; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
-                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0;">
-                        <span style="color: #718096; font-weight: 500;">Usuario:</span>
-                        <span style="color: #2d3748;" id="userName"></span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0;">
-                        <span style="color: #718096; font-weight: 500;">Email:</span>
-                        <span style="color: #2d3748;" id="userEmail"></span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; padding: 0.75rem 0;">
-                        <span style="color: #718096; font-weight: 500;">Token expira:</span>
-                        <span style="color: #2d3748;" id="tokenExpiry"></span>
-                    </div>
-                </div>
-
-                <details style="background: #f7fafc; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid #319795;">
-                    <summary style="cursor: pointer; font-weight: 500; color: #2d3748; padding: 0.5rem;">
-                        Ver Token JWT
-                    </summary>
-                    <pre id="tokenDisplay" style="background: white; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.75rem; margin-top: 1rem; max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0;"></pre>
-                </details>
-
-                <details style="background: #f7fafc; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid #319795;">
-                    <summary style="cursor: pointer; font-weight: 500; color: #2d3748; padding: 0.5rem;">
-                        Ver Permisos (<span id="permissionsCount">0</span>)
-                    </summary>
-                    <pre id="permissionsDisplay" style="background: white; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.75rem; margin-top: 1rem; max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0;"></pre>
-                </details>
-
-                <button type="button" class="btn-primary" onclick="logout()" style="background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);">
-                    <span class="material-icons">logout</span>
-                    Cerrar Sesión
+                    Cancel
                 </button>
             </div>
         </div>
@@ -540,20 +485,12 @@
 
     <script>
         const API_URL = 'https://qw4ech2k0e.execute-api.eu-west-1.amazonaws.com';
-        // UUID de la aplicación en la tabla identity-manager-applications-tbl
         const APP_ID = 'e61e1af9-8992-4bdf-be65-9cad86f34da0'; // identity-mgmt
-        
-        // ============================================================================
-        // CONFIGURACIÓN DE REDIRECCIÓN POST-LOGIN
-        // ============================================================================
-        // Ruta relativa al dashboard (desde login.html a dashboard/index.html)
         const REDIRECT_URL = 'dashboard/index.html';
-        // ============================================================================
         
         let tempEmail = '';
         let tempPassword = '';
 
-        // Toggle password visibility
         function togglePassword(fieldId) {
             const field = document.getElementById(fieldId);
             const icon = document.getElementById(fieldId + '-icon');
@@ -567,7 +504,6 @@
             }
         }
 
-        // Show/hide alerts
         function showAlert(type, message) {
             hideAlerts();
             const alert = document.getElementById(type + 'Alert');
@@ -585,7 +521,6 @@
             });
         }
 
-        // Validate password requirements
         function validatePassword(password) {
             const requirements = {
                 length: password.length >= 8,
@@ -595,7 +530,6 @@
                 special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
             };
 
-            // Update UI
             updateRequirement('req-length', requirements.length);
             updateRequirement('req-uppercase', requirements.uppercase);
             updateRequirement('req-lowercase', requirements.lowercase);
@@ -618,7 +552,6 @@
             }
         }
 
-        // Check password match
         function checkPasswordMatch() {
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
@@ -633,7 +566,6 @@
             }
         }
 
-        // Listen to password input
         document.addEventListener('DOMContentLoaded', () => {
             const newPasswordField = document.getElementById('newPassword');
             const confirmPasswordField = document.getElementById('confirmPassword');
@@ -649,7 +581,6 @@
             }
         });
 
-        // Handle login form submission
         document.getElementById('loginFormElement').addEventListener('submit', async (e) => {
             e.preventDefault();
             hideAlerts();
@@ -659,73 +590,64 @@
             const loginBtn = document.getElementById('loginBtn');
 
             if (!email || !password) {
-                showAlert('error', 'Por favor, complete todos los campos requeridos para continuar.');
+                showAlert('error', 'Please complete all required fields to continue.');
                 return;
             }
 
-            // Disable button and show loading
             loginBtn.disabled = true;
-            loginBtn.innerHTML = '<span class="spinner"></span> Autenticando...';
+            loginBtn.innerHTML = '<span class="spinner"></span> Authenticating...';
 
             try {
                 const response = await fetch(`${API_URL}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        email, 
-                        password,
-                        app_id: APP_ID  // Validar permiso para esta aplicación
-                    })
+                    body: JSON.stringify({ email, password, app_id: APP_ID })
                 });
 
                 const data = await response.json();
                 const responseData = data.data || data;
 
-                // Check if password change is required
                 if (responseData.requiresPasswordChange) {
                     tempEmail = email;
                     tempPassword = password;
                     showPasswordChangeForm();
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '<span class="material-icons">login</span> Sign In';
                     return;
                 }
 
-                // Manejar error 403 (sin permisos)
                 if (response.status === 403) {
-                    showAlert('error', 'Acceso denegado. No dispone de los permisos necesarios para acceder a esta aplicación. Por favor, contacte con el administrador del sistema.');
+                    showAlert('error', 'Access denied. You do not have the necessary permissions to access this application. Please contact the system administrator.');
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '<span class="material-icons">login</span> Sign In';
                     return;
                 }
 
                 if (response.ok && responseData.success) {
-                    // Guardar token y datos del usuario
                     localStorage.setItem('auth_token', responseData.token);
                     localStorage.setItem('user_data', JSON.stringify(responseData.user));
                     localStorage.setItem('token_expires_at', responseData.expiresAt);
-                    
-                    // Redirigir inmediatamente al dashboard
                     window.location.href = REDIRECT_URL;
                 } else {
-                    showAlert('error', responseData.message || 'Error en el login');
+                    showAlert('error', responseData.message || 'Login error');
                     loginBtn.disabled = false;
-                    loginBtn.innerHTML = '<span class="material-icons">email</span> Iniciar Sesión';
+                    loginBtn.innerHTML = '<span class="material-icons">login</span> Sign In';
                 }
             } catch (error) {
-                showAlert('error', 'Error de conexión: ' + error.message);
+                showAlert('error', 'Connection error: ' + error.message);
                 loginBtn.disabled = false;
-                loginBtn.innerHTML = '<span class="material-icons">email</span> Iniciar Sesión';
+                loginBtn.innerHTML = '<span class="material-icons">login</span> Sign In';
             }
         });
 
-        // Show password change form
         function showPasswordChangeForm() {
             document.getElementById('loginForm').style.display = 'none';
             document.getElementById('passwordChangeForm').style.display = 'block';
             document.getElementById('email-display').value = tempEmail;
-            document.getElementById('warningAlert').classList.add('show');
             hideAlerts();
             document.getElementById('warningAlert').classList.add('show');
         }
 
-        // Cancel password change
         function cancelPasswordChange() {
             document.getElementById('loginForm').style.display = 'block';
             document.getElementById('passwordChangeForm').style.display = 'none';
@@ -736,7 +658,6 @@
             hideAlerts();
         }
 
-        // Handle password change
         async function handlePasswordChange() {
             hideAlerts();
             
@@ -745,23 +666,22 @@
             const changeBtn = document.getElementById('changePasswordBtn');
 
             if (!newPassword || !confirmPassword) {
-                showAlert('error', 'Debe completar ambos campos de contraseña para continuar.');
+                showAlert('error', 'You must complete both password fields to continue.');
                 return;
             }
 
             if (newPassword !== confirmPassword) {
-                showAlert('error', 'Las contraseñas introducidas no coinciden. Por favor, verifique e intente nuevamente.');
+                showAlert('error', 'The passwords entered do not match. Please verify and try again.');
                 return;
             }
 
             if (!validatePassword(newPassword)) {
-                showAlert('error', 'La contraseña no cumple con los requisitos de seguridad establecidos. Por favor, revise los criterios indicados.');
+                showAlert('error', 'The password does not meet the established security requirements. Please review the indicated criteria.');
                 return;
             }
 
-            // Disable button and show loading
             changeBtn.disabled = true;
-            changeBtn.innerHTML = '<span class="spinner"></span> Cambiando Contraseña...';
+            changeBtn.innerHTML = '<span class="spinner"></span> Changing Password...';
 
             try {
                 const response = await fetch(`${API_URL}/auth/login`, {
@@ -771,7 +691,7 @@
                         email: tempEmail,
                         password: tempPassword,
                         new_password: newPassword,
-                        app_id: APP_ID  // Validar permiso para esta aplicación
+                        app_id: APP_ID
                     })
                 });
 
@@ -779,31 +699,23 @@
                 const responseData = data.data || data;
 
                 if (response.ok && responseData.success) {
-                    // Limpiar campos
                     document.getElementById('newPassword').value = '';
                     document.getElementById('confirmPassword').value = '';
-                    
-                    // Volver al formulario de login
                     document.getElementById('passwordChangeForm').style.display = 'none';
                     document.getElementById('loginForm').style.display = 'block';
-                    
-                    // Limpiar contraseña temporal
                     document.getElementById('password').value = '';
                     tempPassword = '';
-                    
-                    // Mostrar mensaje de éxito
-                    showAlert('success', 'Contraseña actualizada correctamente. Por favor, inicie sesión con su nueva contraseña.');
+                    showAlert('success', 'Password updated successfully. Please sign in with your new password.');
                 } else {
-                    showAlert('error', responseData.message || 'Error al cambiar contraseña');
+                    showAlert('error', responseData.message || 'Error changing password');
                 }
             } catch (error) {
-                showAlert('error', 'Error de conexión: ' + error.message);
+                showAlert('error', 'Connection error: ' + error.message);
             } finally {
                 changeBtn.disabled = false;
-                changeBtn.innerHTML = '<span class="material-icons">lock</span> Cambiar Contraseña';
+                changeBtn.innerHTML = '<span class="material-icons">lock</span> Change Password';
             }
         }
-
     </script>
 </body>
 </html>
