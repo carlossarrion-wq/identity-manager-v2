@@ -597,9 +597,10 @@ function confirmLogout() {
     // Clear authentication token
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_data');
+    localStorage.removeItem('token_expires_at');
     
-    // Redirect to login page
-    window.location.href = 'login.html';
+    // Redirect to login page (relative path from dashboard to login)
+    window.location.href = '../login.html';
 }
 
 // ============================================================================
