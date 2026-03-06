@@ -845,16 +845,16 @@ class DatabaseService:
             history_query = """
                 INSERT INTO "bedrock-proxy-quota-blocks-history-tbl"
                 (cognito_user_id, cognito_email, block_date, blocked_at, 
-                 blocked_until, unblock_type, requests_count, daily_limit,
+                 unblock_type, requests_count, daily_limit,
                  unblocked_by, unblock_reason, team, person)
                 SELECT 
                     cognito_user_id, cognito_email, CURRENT_DATE, CURRENT_TIMESTAMP,
-                    %s, 'MANUAL_BLOCK', requests_today, daily_request_limit,
+                    'MANUAL_BLOCK', requests_today, daily_request_limit,
                     %s, %s, team, person
                 FROM "bedrock-proxy-user-quotas-tbl"
                 WHERE cognito_user_id = %s
             """
-            cursor.execute(history_query, (blocked_until, performed_by, block_reason, cognito_user_id))
+            cursor.execute(history_query, (performed_by, block_reason, cognito_user_id))
             
             # Formatear resultado
             result_dict = dict(result)
@@ -950,7 +950,7 @@ class DatabaseService:
             # Registrar en historial
             history_query = """
                 INSERT INTO "bedrock-proxy-quota-blocks-history-tbl"
-                (cognito_user_id, cognito_email, block_date, unblocked_at,
+                (cognito_user_id, cognito_email, block_date, blocked_at,
                  unblock_type, requests_count, daily_limit,
                  unblocked_by, unblock_reason, team, person)
                 SELECT 
@@ -1043,7 +1043,7 @@ class DatabaseService:
             # Registrar en historial
             history_query = """
                 INSERT INTO "bedrock-proxy-quota-blocks-history-tbl"
-                (cognito_user_id, cognito_email, block_date, unblocked_at,
+                (cognito_user_id, cognito_email, block_date, blocked_at,
                  unblock_type, requests_count, daily_limit,
                  unblocked_by, unblock_reason, team, person)
                 SELECT 
