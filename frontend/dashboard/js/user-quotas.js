@@ -258,6 +258,30 @@ function showUnblockUserModal(userId) {
     selectedQuotaUser = quotasData.find(q => q.cognito_user_id === userId);
     if (!selectedQuotaUser) return;
     
+    // Update modal title and button based on status
+    const modalTitle = document.querySelector('#unblock-user-modal .modal-header h2');
+    const submitButton = document.querySelector('#unblock-user-modal button[type="submit"]');
+    const reasonLabel = document.querySelector('#unblock-user-modal label[for="unblock-reason"]');
+    const alertMessage = document.querySelector('#unblock-user-modal .alert');
+    
+    if (selectedQuotaUser.status === 'ADMIN_SAFE') {
+        // Admin-Safe user - change to "Remove Admin Protection"
+        modalTitle.innerHTML = '🛡️ Remove Admin Protection';
+        submitButton.textContent = 'Remove Protection';
+        submitButton.style.background = '#805ad5'; // Purple
+        reasonLabel.textContent = 'Reason for removing protection: *';
+        alertMessage.className = 'alert info';
+        alertMessage.innerHTML = '<strong>ℹ️ Note:</strong> User will lose Admin-Safe protection and return to normal quota limits.';
+    } else {
+        // Blocked user - standard unblock
+        modalTitle.innerHTML = '🔓 Unblock User';
+        submitButton.textContent = 'Unblock User';
+        submitButton.style.background = '#38a169'; // Green
+        reasonLabel.textContent = 'Unblock Reason: *';
+        alertMessage.className = 'alert success';
+        alertMessage.innerHTML = '<strong>✅ Note:</strong> User will regain access immediately after unblocking.';
+    }
+    
     document.getElementById('unblock-user-email').textContent = selectedQuotaUser.cognito_email;
     document.getElementById('unblock-user-person').textContent = selectedQuotaUser.person || '-';
     document.getElementById('unblock-user-team').textContent = selectedQuotaUser.team || '-';
