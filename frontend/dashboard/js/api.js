@@ -211,6 +211,37 @@ class IdentityManagerAPI {
         return await this.request('get_user_quotas_today');
     }
 
+    async blockUser(cognitoUserId, blockedUntil, blockReason, performedBy) {
+        return await this.request('block_user', {
+            data: {
+                cognito_user_id: cognitoUserId,
+                blocked_until: blockedUntil,
+                block_reason: blockReason,
+                performed_by: performedBy
+            }
+        });
+    }
+
+    async unblockUser(cognitoUserId, unblockReason, performedBy) {
+        return await this.request('unblock_user', {
+            data: {
+                cognito_user_id: cognitoUserId,
+                unblock_reason: unblockReason,
+                performed_by: performedBy
+            }
+        });
+    }
+
+    async setAdminSafe(cognitoUserId, adminSafeReason, performedBy) {
+        return await this.request('set_admin_safe', {
+            data: {
+                cognito_user_id: cognitoUserId,
+                admin_safe_reason: adminSafeReason,
+                performed_by: performedBy
+            }
+        });
+    }
+
     // ============================================================================
     // CONFIG API
     // ============================================================================

@@ -309,7 +309,17 @@ function closeAdminSafeModal() {
 }
 
 // ============================================================================
-// MODAL ACTIONS (Placeholder - will connect to API later)
+// HELPER: GET CURRENT USER EMAIL
+// ============================================================================
+
+function getCurrentUserEmail() {
+    // Try to get from Cognito session if available
+    // For now, return a placeholder - this should be replaced with actual Cognito user info
+    return 'admin@example.com'; // TODO: Get from Cognito session
+}
+
+// ============================================================================
+// MODAL ACTIONS
 // ============================================================================
 
 async function blockUser() {
@@ -336,17 +346,37 @@ async function blockUser() {
         return;
     }
     
-    console.log('🔒 Block user:', {
-        userId: selectedQuotaUser.cognito_user_id,
-        email: selectedQuotaUser.cognito_email,
-        blockedUntil,
-        reason
-    });
-    
-    // TODO: Call API to block user
-    showNotification('Block user functionality will be implemented soon', 'info');
-    
-    closeBlockUserModal();
+    try {
+        console.log('🔒 Blocking user:', {
+            userId: selectedQuotaUser.cognito_user_id,
+            email: selectedQuotaUser.cognito_email,
+            blockedUntil,
+            reason
+        });
+        
+        // Convert to ISO 8601 format
+        const blockedUntilISO = new Date(blockedUntil).toISOString();
+        const performedBy = getCurrentUserEmail();
+        
+        // Call API
+        const result = await api.blockUser(
+            selectedQuotaUser.cognito_user_id,
+            blockedUntilISO,
+            reason,
+            performedBy
+        );
+        
+        console.log('✅ User blocked successfully:', result);
+        showNotification(`User ${selectedQuotaUser.cognito_email} blocked successfully`, 'success');
+        
+        // Close modal and reload data
+        closeBlockUserModal();
+        await loadUserQuotas();
+        
+    } catch (error) {
+        console.error('❌ Error blocking user:', error);
+        showNotification('Failed to block user: ' + error.message, 'error');
+    }
 }
 
 async function unblockUser() {
@@ -360,17 +390,36 @@ async function unblockUser() {
         return;
     }
     
-    console.log('🔓 Unblock user:', {
-        userId: selectedQuotaUser.cognito_user_id,
-        email: selectedQuotaUser.cognito_email,
-        currentStatus: selectedQuotaUser.status,
-        reason
-    });
-    
-    // TODO: Call API to unblock user
-    showNotification('Unblock user functionality will be implemented soon', 'info');
-    
-    closeUnblockUserModal();
+    try {
+        console.log('🔓 Unblocking user:', {
+            userId: selectedQuotaUser.cognito_user_id,
+            email: selectedQuotaUser.cognito_email,
+            currentStatus: selectedQuotaUser.status,
+            reason
+        });
+        
+        const performedBy = getCurrentUserEmail();
+        
+        // Call API
+        const result = await api.unblockUser(
+            selectedQuotaUser.cognito_user_id,
+            reason,
+            performedBy
+        );
+        
+        console.log('✅ User unblocked successfully:', result);
+        
+        const action = selectedQuotaUser.status === 'ADMIN_SAFE' ? 'unprotected' : 'unblocked';
+        showNotification(`User ${selectedQuotaUser.cognito_email} ${action} successfully`, 'success');
+        
+        // Close modal and reload data
+        closeUnblockUserModal();
+        await loadUserQuotas();
+        
+    } catch (error) {
+        console.error('❌ Error unblocking user:', error);
+        showNotification('Failed to unblock user: ' + error.message, 'error');
+    }
 }
 
 async function setAdminSafe() {
@@ -384,17 +433,34 @@ async function setAdminSafe() {
         return;
     }
     
-    console.log('🛡️ Set Admin-Safe:', {
-        userId: selectedQuotaUser.cognito_user_id,
-        email: selectedQuotaUser.cognito_email,
-        currentStatus: selectedQuotaUser.status,
-        reason
-    });
-    
-    // TODO: Call API to set admin-safe
-    showNotification('Set Admin-Safe functionality will be implemented soon', 'info');
-    
-    closeAdminSafeModal();
+    try {
+        console.log('🛡️ Setting Admin-Safe:', {
+            userId: selectedQuotaUser.cognito_user_id,
+            email: selectedQuotaUser.cognito_email,
+            currentStatus: selectedQuotaUser.status,
+            reason
+        });
+        
+        const performedBy = getCurrentUserEmail();
+        
+        // Call API
+        const result = await api.setAdminSafe(
+            selectedQuotaUser.cognito_user_id,
+            reason,
+            performedBy
+        );
+        
+        console.log('✅ Admin-Safe set successfully:', result);
+        showNotification(`User ${selectedQuotaUser.cognito_email} set to Admin-Safe successfully`, 'success');
+        
+        // Close modal and reload data
+        closeAdminSafeModal();
+        await loadUserQuotas();
+        
+    } catch (error) {
+        console.error('❌ Error setting Admin-Safe:', error);
+        showNotification('Failed to set Admin-Safe: ' + error.message, 'error');
+    }
 }
 
 // ============================================================================
