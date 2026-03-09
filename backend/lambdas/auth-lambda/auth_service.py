@@ -129,12 +129,30 @@ class AuthService:
             }
             
             # 5. Generar token JWT personalizado (1 hora de validez)
-            # No incluimos permisos completos en el token, solo validamos acceso
+            # Incluir permisos de aplicaciones en el token
+            
+            # Filtrar solo permisos de aplicaciones activos para incluir en el JWT
+            app_permissions = [
+                {
+                    'app_id': perm['resource_id'],
+                    'app_name': perm.get('application_name'),
+                    'permission_type': perm['permission_type'],
+                    'permission_level': perm['permission_level']
+                }
+                for perm in permissions
+                if perm.get('scope') == 'application'
+                and perm.get('status') == 'active'
+                and perm.get('is_active') is True
+            ]
+            
+            logger.info(f"Incluyendo {len(app_permissions)} permisos de aplicaciones en el JWT")
+            
             token_payload = {
                 'sub': user_id,
                 'email': email,
                 'name': user_data['name'],
                 'groups': groups,
+                'app_permissions': app_permissions,  # Permisos de aplicaciones
                 'iat': datetime.utcnow(),
                 'exp': datetime.utcnow() + timedelta(hours=config.JWT_EXPIRATION_HOURS)
             }
