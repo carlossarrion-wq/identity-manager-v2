@@ -135,7 +135,7 @@ class AuthService:
             app_permissions = [
                 {
                     'app_id': perm['resource_id'],
-                    'app_name': perm.get('application_name'),
+                    'app_name': perm.get('resource_name'),  # Corregido: usar resource_name
                     'permission_type': perm['permission_type'],
                     'permission_level': perm['permission_level']
                 }
