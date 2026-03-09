@@ -129,13 +129,13 @@ class AuthService:
             }
             
             # 5. Generar token JWT personalizado (1 hora de validez)
-            # Incluir permisos de aplicaciones en el token
+            # Incluir permisos de aplicaciones y módulos en el token
             
-            # Filtrar solo permisos de aplicaciones activos para incluir en el JWT
+            # Filtrar permisos de aplicaciones activos
             app_permissions = [
                 {
                     'app_id': perm['resource_id'],
-                    'app_name': perm.get('resource_name'),  # Corregido: usar resource_name
+                    'app_name': perm.get('resource_name'),
                     'permission_type': perm['permission_type'],
                     'permission_level': perm['permission_level']
                 }
@@ -145,14 +145,31 @@ class AuthService:
                 and perm.get('is_active') is True
             ]
             
-            logger.info(f"Incluyendo {len(app_permissions)} permisos de aplicaciones en el JWT")
+            # Filtrar permisos de módulos activos
+            module_permissions = [
+                {
+                    'module_id': perm['resource_id'],
+                    'module_name': perm.get('resource_name'),
+                    'app_id': perm.get('parent_application_id'),
+                    'app_name': perm.get('parent_application_name'),
+                    'permission_type': perm['permission_type'],
+                    'permission_level': perm['permission_level']
+                }
+                for perm in permissions
+                if perm.get('scope') == 'module'
+                and perm.get('status') == 'active'
+                and perm.get('is_active') is True
+            ]
+            
+            logger.info(f"Incluyendo {len(app_permissions)} permisos de aplicaciones y {len(module_permissions)} permisos de módulos en el JWT")
             
             token_payload = {
                 'sub': user_id,
                 'email': email,
                 'name': user_data['name'],
                 'groups': groups,
-                'app_permissions': app_permissions,  # Permisos de aplicaciones
+                'app_permissions': app_permissions,      # Permisos de aplicaciones
+                'module_permissions': module_permissions,  # Permisos de módulos
                 'iat': datetime.utcnow(),
                 'exp': datetime.utcnow() + timedelta(hours=config.JWT_EXPIRATION_HOURS)
             }
