@@ -125,7 +125,11 @@ resource "aws_secretsmanager_secret_version" "jwt_secret" {
   })
 }
 
-# Lambda Module
+# ============================================================================
+# LAMBDA FUNCTIONS
+# ============================================================================
+
+# Lambda API - identity-mgmt-dev-api-lmbd
 module "lambda" {
   source = "../../modules/lambda"
 
@@ -167,5 +171,159 @@ module "lambda" {
   tags = {
     Environment = "dev"
     Application = "identity-manager"
+    Component   = "api"
   }
+}
+
+# Lambda Auth - login-authorization-service
+module "auth_lambda" {
+  source = "../../modules/lambda"
+
+  function_name    = "login-authorization-service"
+  lambda_zip_path  = "../../../backend/lambdas/auth-lambda"
+  
+  timeout          = 30
+  memory_size      = 512
+  log_level        = "INFO"
+  
+  # Cognito Configuration
+  cognito_user_pool_id  = "eu-west-1_UaMIbG9pD"
+  cognito_user_pool_arn = "arn:aws:cognito-idp:eu-west-1:701055077130:userpool/eu-west-1_UaMIbG9pD"
+  
+  # Secrets Manager
+  db_secret_name         = module.rds.secret_name
+  db_secret_arn          = module.rds.secret_arn
+  jwt_secret_name        = aws_secretsmanager_secret.jwt_secret.name
+  jwt_secret_arn         = aws_secretsmanager_secret.jwt_secret.arn
+  email_smtp_secret_name = module.secrets.email_smtp_secret_name
+  email_smtp_secret_arn  = module.secrets.email_smtp_secret_arn
+  
+  # VPC Configuration - DISABLED for DEV
+  vpc_config = null
+  
+  # Optional features
+  enable_xray          = false
+  create_function_url  = false  # Auth Lambda usa API Gateway
+  create_alarms        = false  # Disabled for dev
+  log_retention_days   = 7
+  
+  tags = {
+    Environment = "dev"
+    Application = "identity-manager"
+    Component   = "authentication"
+  }
+  
+  depends_on = [
+    module.rds,
+    aws_secretsmanager_secret.jwt_secret
+  ]
+}
+
+# ============================================================================
+# FRONTEND - S3 + CloudFront
+# ============================================================================
+
+module "frontend" {
+  source = "../../modules/frontend"
+
+  project_name         = "identity-mgmt"
+  environment          = "dev"
+  frontend_source_path = "${path.module}/../../../../frontend"
+  cloudfront_price_class = "PriceClass_100"
+
+  tags = {
+    Environment = "dev"
+    Application = "identity-manager"
+    Component   = "frontend"
+    Team        = "Platform"
+    CostCenter  = "Engineering"
+  }
+}
+
+# ============================================================================
+# OUTPUTS
+# ============================================================================
+
+# RDS Outputs
+output "rds_endpoint" {
+  description = "RDS instance endpoint"
+  value       = module.rds.db_instance_endpoint
+}
+
+output "rds_address" {
+  description = "RDS instance address"
+  value       = module.rds.db_instance_address
+}
+
+output "rds_port" {
+  description = "RDS instance port"
+  value       = module.rds.db_instance_port
+}
+
+output "database_name" {
+  description = "Database name"
+  value       = module.rds.db_name
+}
+
+output "secret_arn" {
+  description = "ARN of Secrets Manager secret with DB credentials"
+  value       = module.rds.secret_arn
+}
+
+output "secret_name" {
+  description = "Name of Secrets Manager secret with DB credentials"
+  value       = module.rds.secret_name
+}
+
+output "security_group_id" {
+  description = "Security group ID for RDS"
+  value       = module.rds.security_group_id
+}
+
+output "connection_command" {
+  description = "Command to connect to the database"
+  value       = "aws secretsmanager get-secret-value --secret-id ${module.rds.secret_name} --query SecretString --output text | jq -r 'psql -h \\(.host) -p \\(.port) -U \\(.username) -d \\(.dbname)'"
+}
+
+# Lambda API Outputs
+output "lambda_function_name" {
+  description = "Nombre de la función Lambda API"
+  value       = module.lambda.function_name
+}
+
+output "lambda_function_arn" {
+  description = "ARN de la función Lambda API"
+  value       = module.lambda.function_arn
+}
+
+# Lambda Auth Outputs
+output "auth_lambda_function_name" {
+  description = "Nombre de la función Lambda de autenticación"
+  value       = module.auth_lambda.function_name
+}
+
+output "auth_lambda_function_arn" {
+  description = "ARN de la función Lambda de autenticación"
+  value       = module.auth_lambda.function_arn
+}
+
+output "auth_lambda_role_arn" {
+  description = "ARN del rol IAM de la Lambda de autenticación"
+  value       = module.auth_lambda.role_arn
+}
+
+# Frontend Outputs
+output "frontend_cloudfront_url" {
+  description = "CloudFront URL for the frontend"
+  value       = module.frontend.cloudfront_url
+}
+
+output "frontend_s3_bucket" {
+  description = "S3 bucket name"
+  value       = module.frontend.s3_bucket_name
+}
+
+output "frontend_cloudfront_distribution_id" {
+  description = "CloudFront distribution ID (for cache invalidation)"
+  value       = module.frontend.cloudfront_distribution_id
 }
