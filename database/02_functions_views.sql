@@ -143,7 +143,7 @@ BEGIN
     
     -- Incrementar contador
     UPDATE "bedrock-proxy-user-quotas-tbl"
-    SET requests_today = requests_today + 1,
+    SET requests_today = "bedrock-proxy-user-quotas-tbl".requests_today + 1,
         last_request_at = CURRENT_TIMESTAMP,
         updated_at = CURRENT_TIMESTAMP
     WHERE cognito_user_id = p_cognito_user_id;
