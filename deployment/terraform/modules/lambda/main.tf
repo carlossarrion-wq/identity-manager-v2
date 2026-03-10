@@ -124,6 +124,7 @@ resource "aws_iam_role_policy" "lambda_cognito" {
           "cognito-idp:AdminAddUserToGroup",
           "cognito-idp:AdminRemoveUserFromGroup",
           "cognito-idp:AdminListGroupsForUser",
+          "cognito-idp:AdminSetUserPassword",
           "cognito-idp:ListUsers",
           "cognito-idp:ListUsersInGroup",
           "cognito-idp:ListGroups"

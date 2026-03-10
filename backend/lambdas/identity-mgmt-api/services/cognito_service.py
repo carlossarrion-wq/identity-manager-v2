@@ -326,6 +326,73 @@ class CognitoService:
             logger.error(f"Error obteniendo atributos de usuario {username}: {e}")
             return {}
     
+    def reset_user_password(
+        self,
+        username: str,
+        new_password: Optional[str] = None,
+        send_email: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Resetear contraseña de un usuario
+        
+        Args:
+            username: Username o email del usuario
+            new_password: Nueva contraseña (opcional). Si es None, se genera una automática
+            send_email: Si se debe enviar email con la nueva contraseña
+            
+        Returns:
+            Dict con información del reset
+        """
+        try:
+            import secrets
+            import string
+            
+            # Si no se proporciona contraseña, generar una segura
+            password_generated = False
+            if not new_password:
+                # Generar contraseña aleatoria de 12 caracteres
+                # Con mayúsculas, minúsculas, números y símbolos
+                alphabet = string.ascii_letters + string.digits + "!@#$%^&*_-"
+                new_password = ''.join(secrets.choice(alphabet) for _ in range(12))
+                
+                # Asegurar que tenga al menos uno de cada tipo
+                new_password = (
+                    secrets.choice(string.ascii_uppercase) +
+                    secrets.choice(string.ascii_lowercase) +
+                    secrets.choice(string.digits) +
+                    secrets.choice("!@#$%^&*_-") +
+                    new_password
+                )
+                password_generated = True
+            
+            # Resetear contraseña en Cognito
+            # Permanent=False fuerza al usuario a cambiarla en el próximo login
+            self.client.admin_set_user_password(
+                UserPoolId=self.user_pool_id,
+                Username=username,
+                Password=new_password,
+                Permanent=False
+            )
+            
+            logger.info(f"Contraseña reseteada para usuario: {username}")
+            
+            return {
+                'success': True,
+                'username': username,
+                'password': new_password,  # Siempre devolver la contraseña
+                'password_generated': password_generated,
+                'message': 'Contraseña reseteada correctamente'
+            }
+            
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            if error_code == 'UserNotFoundException':
+                raise ValueError(f'Usuario no encontrado: {username}')
+            elif error_code == 'InvalidParameterException':
+                raise ValueError(f'Contraseña inválida: {e.response["Error"]["Message"]}')
+            logger.error(f"Error reseteando contraseña: {e}")
+            raise Exception(f"Error de Cognito: {e.response['Error']['Message']}")
+    
     def _get_user_groups(self, username: str) -> List[str]:
         """
         Obtener grupos de un usuario

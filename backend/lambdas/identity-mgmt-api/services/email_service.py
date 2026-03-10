@@ -342,3 +342,139 @@ Fecha y hora: {self._get_madrid_time()}
 © 2026 Identity Manager - Todos los derechos reservados
 """
         return text
+    
+    def send_password_reset_email(
+        self,
+        recipient_email: str,
+        recipient_name: str,
+        temporary_password: str,
+        reset_by: str,
+        reason: Optional[str] = None
+    ) -> bool:
+        """
+        Enviar email con contraseña temporal después de reset
+        
+        Args:
+            recipient_email: Email del usuario
+            recipient_name: Nombre del usuario
+            temporary_password: Contraseña temporal
+            reset_by: Email del administrador que realizó el reset
+            reason: Motivo del reset (opcional)
+            
+        Returns:
+            True si el email se envió correctamente
+        """
+        try:
+            # Crear mensaje
+            message = MIMEMultipart('alternative')
+            message['Subject'] = "🔑 Your Password Has Been Reset - Identity Manager"
+            message['From'] = f"Identity Manager <{self.gmail_user}>"
+            message['To'] = recipient_email
+            message['Reply-To'] = self.reply_to
+            
+            # Construir cuerpo del email
+            text_body = self._build_password_reset_email_text(
+                recipient_name, temporary_password, reset_by, reason
+            )
+            html_body = self._build_password_reset_email_html(
+                recipient_name, temporary_password, reset_by, reason
+            )
+            
+            # Adjuntar partes
+            part1 = MIMEText(text_body, 'plain', 'utf-8')
+            part2 = MIMEText(html_body, 'html', 'utf-8')
+            message.attach(part1)
+            message.attach(part2)
+            
+            # Enviar via SMTP
+            context = ssl.create_default_context()
+            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                if self.use_tls:
+                    server.starttls(context=context)
+                server.login(self.gmail_user, self.gmail_password)
+                server.send_message(message)
+            
+            logger.info(f"Email de reset enviado a {recipient_email}")
+            return True
+        except Exception as e:
+            logger.error(f"Error enviando email de reset: {e}")
+            return False
+    
+    def _build_password_reset_email_html(
+        self, recipient_name: str, temporary_password: str, 
+        reset_by: str, reason: Optional[str] = None
+    ) -> str:
+        """Construir cuerpo HTML del email de reset"""
+        madrid_time = self._get_madrid_time()
+        reason_section = f"""
+        <div class="warning">
+            <strong>📝 Reason:</strong>
+            <p>{reason}</p>
+        </div>
+        """ if reason else ""
+        
+        return f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #319795; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }}
+        .content {{ background-color: #f9f9f9; padding: 20px; border: 1px solid #ddd; border-radius: 0 0 5px 5px; }}
+        .password-box {{ background-color: #fff; border: 2px solid #319795; border-radius: 5px; padding: 15px; margin: 20px 0; font-family: monospace; font-size: 18px; font-weight: bold; text-align: center; }}
+        .warning {{ background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin: 20px 0; }}
+        .footer {{ text-align: center; color: #666; font-size: 12px; margin-top: 20px; }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔑 Password Reset</h1>
+    </div>
+    <div class="content">
+        <p>Hello <strong>{recipient_name}</strong>,</p>
+        <p>Your password has been reset by <strong>{reset_by}</strong> at {madrid_time}.</p>
+        {reason_section}
+        <p><strong>Temporary Password:</strong></p>
+        <div class="password-box">{temporary_password}</div>
+        <div class="warning">
+            <strong>⚠️ Important:</strong>
+            <p>You will be required to change this password on your next login.</p>
+        </div>
+        <p>If you didn't request this, contact your administrator immediately.</p>
+    </div>
+    <div class="footer">
+        <p>Identity Manager - AWS Bedrock Access Management</p>
+        <p>{self._get_madrid_time()}</p>
+    </div>
+</body>
+</html>
+"""
+    
+    def _build_password_reset_email_text(
+        self, recipient_name: str, temporary_password: str,
+        reset_by: str, reason: Optional[str] = None
+    ) -> str:
+        """Construir cuerpo texto del email de reset"""
+        madrid_time = self._get_madrid_time()
+        reason_text = f"\n\nReason: {reason}\n" if reason else ""
+        
+        return f"""
+Password Reset - Identity Manager
+
+Hello {recipient_name},
+
+Your password has been reset by {reset_by} at {madrid_time}.
+{reason_text}
+
+TEMPORARY PASSWORD:
+{temporary_password}
+
+IMPORTANT:
+⚠️ You will be required to change this password on your next login.
+
+If you didn't request this, contact your administrator immediately.
+
+---
+Identity Manager - AWS Bedrock Access Management
+"""

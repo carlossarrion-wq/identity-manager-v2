@@ -242,6 +242,17 @@ class IdentityManagerAPI {
         });
     }
 
+    async resetPassword(userId, newPassword, reason, sendEmail) {
+        return await this.request('reset_password', {
+            data: {
+                user_id: userId,
+                new_password: newPassword,
+                reason: reason,
+                send_email: sendEmail
+            }
+        });
+    }
+
     // ============================================================================
     // CONFIG API
     // ============================================================================

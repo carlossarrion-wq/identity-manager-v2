@@ -187,6 +187,9 @@ def route_operation(operation: str, body: Dict[str, Any], request_id: str) -> Di
         'block_user': handle_block_user,
         'unblock_user': handle_unblock_user,
         'set_admin_safe': handle_set_admin_safe,
+        
+        # Operaciones de reset de contraseña
+        'reset_password': handle_reset_password,
     }
     
     handler = operations.get(operation)
@@ -1163,6 +1166,85 @@ def handle_unblock_user(body: Dict[str, Any], request_id: str) -> Dict[str, Any]
         'operation': 'unblock_user',
         'user': result
     }
+
+
+def handle_reset_password(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """
+    Resetear contraseña de un usuario
+    
+    Args:
+        body: Datos del request con user_id, new_password (optional), reason (optional), send_email
+        request_id: ID del request para logging
+        
+    Returns:
+        Dict con información del reset
+    """
+    logger.info(f"[{request_id}] Reseteando contraseña de usuario")
+    
+    data = body.get('data', {})
+    user_id = data.get('user_id')
+    new_password = data.get('new_password')  # Opcional
+    reason = data.get('reason', 'No reason provided')
+    send_email = data.get('send_email', True)
+    
+    if not user_id:
+        raise ValueError('El parámetro user_id es requerido')
+    
+    # Obtener info del usuario
+    user_info = cognito_service.get_user(user_id)
+    
+    # Resetear contraseña en Cognito
+    reset_result = cognito_service.reset_user_password(
+        username=user_id,
+        new_password=new_password if new_password else None,
+        send_email=send_email
+    )
+    
+    # Enviar email si se solicitó
+    email_sent = False
+    if send_email:
+        # Obtener email del usuario que realiza el reset desde el contexto
+        # Por ahora usamos 'system' como default
+        reset_by = 'System Administrator'
+        
+        email_sent = email_service.send_password_reset_email(
+            recipient_email=user_info['email'],
+            recipient_name=user_info.get('person', user_info['email']),
+            temporary_password=reset_result.get('password', '****'),
+            reset_by=reset_by,
+            reason=reason if reason != 'No reason provided' else None
+        )
+    
+    # Registrar en auditoría
+    database_service.log_audit(
+        operation_type='RESET_PASSWORD',
+        resource_type='cognito_user',
+        resource_id=user_id,
+        cognito_user_id=user_id,
+        cognito_email=user_info['email'],
+        new_value={
+            'reason': reason,
+            'password_generated': reset_result.get('password_generated', False),
+            'email_sent': email_sent
+        },
+        request_id=request_id
+    )
+    
+    logger.info(f"[{request_id}] Contraseña reseteada exitosamente para usuario {user_id}")
+    
+    # Preparar respuesta
+    response = {
+        'success': True,
+        'message': 'Password reset successfully',
+        'email_sent': email_sent,
+        'password_generated': reset_result.get('password_generated', False)
+    }
+    
+    # Solo incluir password si no se envió por email
+    if not send_email and reset_result.get('password'):
+        response['temporary_password'] = reset_result['password']
+    
+    return response
 
 
 def handle_set_admin_safe(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
