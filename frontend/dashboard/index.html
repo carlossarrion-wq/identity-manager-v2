@@ -13,6 +13,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
     
+    <!-- AWS SDK for Cognito -->
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1691.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.12/dist/amazon-cognito-identity.min.js"></script>
+    
     <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
@@ -1219,14 +1223,16 @@
         </div>
     </div>
 
-    <!-- Authentication Guard (MUST be loaded first) -->
+    <!-- Configuration (MUST load after Cognito SDK) -->
+    <script src="js/config.js?v=20260310"></script>
+    
+    <!-- Authentication Guard (loads after config) -->
     <script src="js/auth-guard.js"></script>
     
     <!-- JWT Permissions Manager (load early) -->
     <script src="js/jwt-permissions.js?v=20260309"></script>
     
     <!-- Dashboard JavaScript -->
-    <script src="js/config.js?v=20260305"></script>
     <script src="js/api.js?v=20260305-3"></script>
     <script src="js/dashboard.js?v=20260305"></script>
     <script src="js/permissions.js?v=20260309"></script>

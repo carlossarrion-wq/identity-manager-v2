@@ -1,49 +1,59 @@
-# Frontend Deployment Module
+# Frontend Module - Identity Manager
 
-This Terraform module deploys the Identity Manager frontend to AWS S3 with CloudFront CDN distribution.
+## Descripción
 
-## Features
+Módulo de Terraform para desplegar el frontend de Identity Manager en S3 con distribución CloudFront CDN.
 
-- ✅ S3 bucket with versioning and encryption
-- ✅ CloudFront CDN for global distribution
-- ✅ Origin Access Identity (OAI) for secure S3 access
-- ✅ Automatic HTTPS redirect
-- ✅ Custom error pages (404/403 → login.html)
-- ✅ Optimized caching for static assets
-- ✅ Automatic file upload to S3
-
-## Architecture
+## Arquitectura
 
 ```
-┌─────────────┐
-│   Users     │
-└──────┬──────┘
-       │ HTTPS
-       ▼
-┌─────────────────┐
-│   CloudFront    │ ← CDN Distribution
-│   (Global CDN)  │
-└────────┬────────┘
-         │ OAI
-         ▼
-┌─────────────────┐
-│   S3 Bucket     │ ← Static Files
-│ (Private)       │
-└─────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                         Usuario                              │
+└────────────────────────┬────────────────────────────────────┘
+                         │ HTTPS
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│              CloudFront Distribution                         │
+│         (CDN Global con HTTPS y Compresión)                  │
+│                                                               │
+│  - Default Root: login.html                                  │
+│  - Cache: CSS/JS (1 día), HTML (1 hora)                     │
+│  - Error Pages: 403/404 → login.html                        │
+│  - Compression: Enabled                                      │
+│  - Protocol: HTTPS only (redirect HTTP)                      │
+└────────────────────────┬────────────────────────────────────┘
+                         │ Origin Access Identity (OAI)
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    S3 Bucket (Private)                       │
+│                                                               │
+│  Structure:                                                  │
+│  ├── login.html                                              │
+│  └── dashboard/                                              │
+│      ├── index.html                                          │
+│      ├── css/                                                │
+│      │   └── dashboard.css                                   │
+│      └── js/                                                 │
+│          ├── api.js                                          │
+│          ├── auth-guard.js                                   │
+│          ├── config.js                                       │
+│          ├── dashboard.js                                    │
+│          ├── jwt-permissions.js                              │
+│          ├── permissions.js                                  │
+│          ├── proxy-usage.js                                  │
+│          └── user-quotas.js                                  │
+│                                                               │
+│  Security:                                                   │
+│  - Block Public Access: Enabled                              │
+│  - Encryption: AES256                                        │
+│  - Versioning: Enabled                                       │
+│  - Access: Only via CloudFront OAI                           │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## Naming Convention
+---
 
-**S3 Bucket:** `<project>-<environment>-frontend-s3`
-
-Examples:
-- `identity-mgmt-dev-frontend-s3`
-- `identity-mgmt-pre-frontend-s3`
-- `identity-mgmt-pro-frontend-s3`
-
-## Usage
-
-### Basic Example
+## Uso
 
 ```hcl
 module "frontend" {
@@ -52,157 +62,444 @@ module "frontend" {
   project_name         = "identity-mgmt"
   environment          = "dev"
   frontend_source_path = "${path.module}/../../../../frontend"
-}
-```
-
-### Complete Example
-
-```hcl
-module "frontend" {
-  source = "../../modules/frontend"
-
-  project_name           = "identity-mgmt"
-  environment            = "dev"
-  frontend_source_path   = "${path.module}/../../../../frontend"
   cloudfront_price_class = "PriceClass_100"
 
   tags = {
-    Team        = "Platform"
-    CostCenter  = "Engineering"
-    Application = "Identity Manager"
+    Environment = "dev"
+    Application = "identity-manager"
+    Component   = "frontend"
   }
 }
 ```
 
-## Inputs
+---
 
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|----------|
-| project_name | Project name (e.g., identity-mgmt) | string | - | yes |
-| environment | Environment (dev, pre, pro) | string | - | yes |
-| frontend_source_path | Path to frontend source files | string | `../../frontend` | no |
-| cloudfront_price_class | CloudFront price class | string | `PriceClass_100` | no |
-| tags | Additional tags | map(string) | `{}` | no |
+## Variables
+
+### Requeridas
+
+#### `project_name`
+- **Descripción:** Nombre del proyecto
+- **Tipo:** `string`
+- **Ejemplo:** `"identity-mgmt"`
+- **Validación:** Lowercase, empieza con letra, solo letras/números/guiones
+
+#### `environment`
+- **Descripción:** Entorno de despliegue
+- **Tipo:** `string`
+- **Valores:** `dev`, `pre`, `pro`
+
+### Opcionales
+
+#### `frontend_source_path`
+- **Descripción:** Ruta a los archivos fuente del frontend
+- **Tipo:** `string`
+- **Default:** `"../../frontend"`
+- **Ejemplo:** `"${path.module}/../../../../frontend"`
+
+#### `cloudfront_price_class`
+- **Descripción:** Clase de precio de CloudFront
+- **Tipo:** `string`
+- **Default:** `"PriceClass_100"` (US, Canada, Europe)
+- **Opciones:**
+  - `PriceClass_100`: US, Canada, Europe
+  - `PriceClass_200`: US, Canada, Europe, Asia, Middle East, Africa
+  - `PriceClass_All`: Todas las ubicaciones
+
+#### `tags`
+- **Descripción:** Tags adicionales para los recursos
+- **Tipo:** `map(string)`
+- **Default:** `{}`
+
+---
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| s3_bucket_name | Name of the S3 bucket |
-| s3_bucket_arn | ARN of the S3 bucket |
-| cloudfront_distribution_id | CloudFront distribution ID |
-| cloudfront_domain_name | CloudFront domain name |
-| cloudfront_url | Full HTTPS URL |
+### `s3_bucket_name`
+- **Descripción:** Nombre del bucket S3
+- **Valor:** `identity-mgmt-dev-frontend-s3`
 
-## Deployment
+### `s3_bucket_arn`
+- **Descripción:** ARN del bucket S3
+- **Valor:** `arn:aws:s3:::identity-mgmt-dev-frontend-s3`
 
-### Using the Script
+### `cloudfront_distribution_id`
+- **Descripción:** ID de la distribución CloudFront
+- **Uso:** Para invalidar caché
+- **Ejemplo:** `E1234567890ABC`
 
-```bash
-cd deployment/terraform/environments/dev
-./deploy-frontend.sh
+### `cloudfront_domain_name`
+- **Descripción:** Dominio de CloudFront
+- **Ejemplo:** `d1234567890abc.cloudfront.net`
+
+### `cloudfront_url`
+- **Descripción:** URL completa HTTPS
+- **Ejemplo:** `https://d1234567890abc.cloudfront.net`
+
+### `cloudfront_hosted_zone_id`
+- **Descripción:** Zone ID de Route 53 para CloudFront
+- **Uso:** Para crear alias records
+
+---
+
+## Recursos Creados
+
+### 1. S3 Bucket
+```hcl
+Resource: aws_s3_bucket.frontend
+Name: identity-mgmt-dev-frontend-s3
 ```
 
-### Manual Deployment
+**Configuración:**
+- ✅ Versioning habilitado
+- ✅ Encryption: AES256
+- ✅ Public Access: Bloqueado
+- ✅ Access: Solo via CloudFront OAI
 
+### 2. CloudFront Distribution
+```hcl
+Resource: aws_cloudfront_distribution.frontend
+```
+
+**Configuración:**
+- ✅ HTTPS only (redirect HTTP)
+- ✅ IPv6 habilitado
+- ✅ Compression habilitado
+- ✅ Default root: login.html
+- ✅ Error pages: 403/404 → login.html
+
+**Cache Behaviors:**
+```yaml
+HTML Files:
+  TTL: 0 min - 1 hour - 1 day
+  Compress: Yes
+  
+CSS Files (/dashboard/css/*):
+  TTL: 0 min - 1 day - 1 year
+  Compress: Yes
+  
+JS Files (/dashboard/js/*):
+  TTL: 0 min - 1 day - 1 year
+  Compress: Yes
+```
+
+### 3. Origin Access Identity (OAI)
+```hcl
+Resource: aws_cloudfront_origin_access_identity.frontend
+```
+
+**Propósito:** Permitir a CloudFront acceder al bucket S3 privado
+
+### 4. S3 Bucket Policy
+```hcl
+Resource: aws_s3_bucket_policy.frontend
+```
+
+**Permite:** Solo CloudFront OAI puede leer objetos
+
+### 5. S3 Objects
+```hcl
+Resources:
+  - aws_s3_object.login_html
+  - aws_s3_object.dashboard_index
+  - aws_s3_object.dashboard_css (for_each)
+  - aws_s3_object.dashboard_js (for_each)
+```
+
+**Auto-upload:** Terraform sube automáticamente todos los archivos
+
+---
+
+## Estructura de Archivos Frontend
+
+```
+frontend/
+├── login.html                    # Página de login
+└── dashboard/
+    ├── index.html                # Dashboard principal
+    ├── css/
+    │   └── dashboard.css         # Estilos
+    └── js/
+        ├── api.js                # Cliente API
+        ├── auth-guard.js         # Protección de rutas
+        ├── config.js             # Configuración
+        ├── dashboard.js          # Lógica principal
+        ├── jwt-permissions.js    # Manejo de permisos JWT
+        ├── permissions.js        # Gestión de permisos
+        ├── proxy-usage.js        # Analytics de uso
+        └── user-quotas.js        # Gestión de cuotas
+```
+
+---
+
+## Configuración del Frontend
+
+### config.js
+```javascript
+const API_CONFIG = {
+    BASE_URL: 'https://flzqvv3jt4.execute-api.eu-west-1.amazonaws.com/dev',
+    COGNITO: {
+        USER_POOL_ID: 'eu-west-1_UaMIbG9pD',
+        CLIENT_ID: 'xxx',
+        REGION: 'eu-west-1'
+    }
+};
+```
+
+**⚠️ IMPORTANTE:** Actualizar `config.js` con los valores correctos antes del despliegue.
+
+---
+
+## Despliegue
+
+### Opción 1: Terraform Apply
 ```bash
 cd deployment/terraform/environments/dev
 
-# Initialize Terraform
-terraform init
+# Aplicar cambios
+terraform apply
 
-# Plan deployment
-terraform plan -target=module.frontend
-
-# Apply deployment
-terraform apply -target=module.frontend
+# Outputs
+terraform output cloudfront_url
 ```
 
-## Updating Frontend Files
-
-After making changes to frontend files:
-
+### Opción 2: Actualizar Solo Frontend
 ```bash
-# Re-apply Terraform to upload new files
+# 1. Modificar archivos en /frontend
+
+# 2. Aplicar solo el módulo frontend
 terraform apply -target=module.frontend
 
-# Invalidate CloudFront cache
+# 3. Invalidar caché de CloudFront
 aws cloudfront create-invalidation \
   --distribution-id $(terraform output -raw frontend_cloudfront_distribution_id) \
   --paths "/*"
 ```
 
-## CloudFront Price Classes
+---
 
-- **PriceClass_100**: US, Canada, Europe (cheapest)
-- **PriceClass_200**: US, Canada, Europe, Asia, Middle East, Africa
-- **PriceClass_All**: All edge locations (most expensive)
+## Invalidación de Caché
 
-## File Structure
-
-```
-frontend/
-├── login.html              # Login page (root)
-└── dashboard/
-    ├── index.html          # Dashboard
-    ├── css/
-    │   └── *.css          # Stylesheets
-    └── js/
-        └── *.js           # JavaScript files
-```
-
-## Security Features
-
-- ✅ S3 bucket is private (no public access)
-- ✅ CloudFront uses Origin Access Identity (OAI)
-- ✅ HTTPS enforced (HTTP redirects to HTTPS)
-- ✅ Server-side encryption (AES256)
-- ✅ Versioning enabled
-
-## Cache Behavior
-
-- **HTML files**: 1 hour cache (3600s)
-- **CSS/JS files**: 1 day cache (86400s)
-- **Compression**: Enabled for all files
-
-## Cost Optimization
-
-- Uses `PriceClass_100` by default (cheapest)
-- Compression enabled to reduce data transfer
-- Efficient caching to reduce origin requests
-
-## Troubleshooting
-
-### Files not updating
-
+### Invalidar Todo
 ```bash
-# Invalidate CloudFront cache
+DISTRIBUTION_ID=$(terraform output -raw frontend_cloudfront_distribution_id)
+
 aws cloudfront create-invalidation \
-  --distribution-id YOUR_DISTRIBUTION_ID \
+  --distribution-id $DISTRIBUTION_ID \
   --paths "/*"
 ```
 
-### Access denied errors
+### Invalidar Archivos Específicos
+```bash
+aws cloudfront create-invalidation \
+  --distribution-id $DISTRIBUTION_ID \
+  --paths "/dashboard/js/config.js" "/dashboard/index.html"
+```
 
-Check that:
-1. S3 bucket policy allows CloudFront OAI
-2. CloudFront distribution is enabled
-3. Files have correct permissions
+### Verificar Invalidación
+```bash
+aws cloudfront get-invalidation \
+  --distribution-id $DISTRIBUTION_ID \
+  --id <invalidation-id>
+```
 
-### 404 errors
+---
 
-The module redirects 404/403 to `/login.html`. Ensure `login.html` exists in the S3 bucket.
+## Seguridad
 
-## Examples
+### 1. S3 Bucket
+```yaml
+✅ Block Public Access: Enabled
+✅ Encryption: AES256 (server-side)
+✅ Versioning: Enabled
+✅ Access: Only via CloudFront OAI
+✅ No public URLs
+```
 
-See `deployment/terraform/environments/dev/frontend.tf` for a complete working example.
+### 2. CloudFront
+```yaml
+✅ HTTPS Only: HTTP redirects to HTTPS
+✅ TLS: Minimum TLSv1.2_2021
+✅ Origin: Private S3 via OAI
+✅ No custom domain (using CloudFront domain)
+```
 
-## Requirements
+### 3. Frontend Code
+```yaml
+✅ JWT Tokens: Stored in sessionStorage (not localStorage)
+✅ Auth Guard: Protege rutas del dashboard
+✅ CORS: Configurado en API Gateway
+✅ No credentials in code: Config via config.js
+```
 
-- Terraform >= 1.0
-- AWS Provider ~> 5.0
-- AWS CLI configured with appropriate credentials
+---
 
-## License
+## Troubleshooting
 
-Internal use only.
+### Error: 403 Forbidden
+**Causa:** CloudFront no puede acceder a S3
+
+**Solución:**
+```bash
+# Verificar bucket policy
+aws s3api get-bucket-policy --bucket identity-mgmt-dev-frontend-s3
+
+# Verificar OAI
+aws cloudfront get-cloud-front-origin-access-identity \
+  --id $(terraform output -raw cloudfront_oai_id)
+```
+
+### Error: 404 Not Found
+**Causa:** Archivo no existe en S3
+
+**Solución:**
+```bash
+# Listar archivos en S3
+aws s3 ls s3://identity-mgmt-dev-frontend-s3/ --recursive
+
+# Re-aplicar Terraform para subir archivos
+terraform apply -target=module.frontend
+```
+
+### Caché No Se Actualiza
+**Causa:** CloudFront está sirviendo versión cacheada
+
+**Solución:**
+```bash
+# Invalidar caché
+aws cloudfront create-invalidation \
+  --distribution-id $DISTRIBUTION_ID \
+  --paths "/*"
+
+# O esperar TTL (1 hora para HTML, 1 día para CSS/JS)
+```
+
+### Error: CORS
+**Causa:** API Gateway no tiene CORS configurado
+
+**Solución:**
+1. Verificar headers CORS en Lambda (response_builder.py)
+2. Verificar métodos OPTIONS en API Gateway
+3. Verificar que API Gateway devuelve headers CORS
+
+---
+
+## Performance
+
+### Cache TTL
+```yaml
+HTML Files:
+  Default: 1 hour
+  Max: 1 day
+  
+CSS/JS Files:
+  Default: 1 day
+  Max: 1 year
+  
+Compression: Enabled (gzip/brotli)
+```
+
+### CloudFront Locations
+```yaml
+PriceClass_100:
+  - North America
+  - Europe
+  
+PriceClass_200:
+  - North America
+  - Europe
+  - Asia
+  - Middle East
+  - Africa
+  
+PriceClass_All:
+  - All CloudFront edge locations
+```
+
+---
+
+## Costos Estimados
+
+### S3
+```
+Storage: ~1 MB
+Requests: ~1000/month
+Cost: < $0.10/month
+```
+
+### CloudFront
+```
+Data Transfer: ~10 GB/month
+Requests: ~10,000/month
+Cost: ~$1-2/month (PriceClass_100)
+```
+
+**Total:** ~$2-3/month
+
+---
+
+## Ejemplos
+
+### Despliegue Completo
+```hcl
+module "frontend" {
+  source = "../../modules/frontend"
+
+  project_name         = "identity-mgmt"
+  environment          = "dev"
+  frontend_source_path = "${path.module}/../../../../frontend"
+  cloudfront_price_class = "PriceClass_100"
+
+  tags = {
+    Environment = "dev"
+    Application = "identity-manager"
+    Component   = "frontend"
+    Team        = "Platform"
+    CostCenter  = "Engineering"
+  }
+}
+
+output "frontend_url" {
+  value = module.frontend.cloudfront_url
+}
+```
+
+### Actualizar Config.js
+```javascript
+// frontend/dashboard/js/config.js
+const API_CONFIG = {
+    BASE_URL: 'https://flzqvv3jt4.execute-api.eu-west-1.amazonaws.com/dev',
+    COGNITO: {
+        USER_POOL_ID: 'eu-west-1_UaMIbG9pD',
+        CLIENT_ID: '7abc123def456ghi789jkl',
+        REGION: 'eu-west-1'
+    }
+};
+```
+
+---
+
+## Changelog
+
+### 2026-03-10
+- ✅ Documentación completa creada
+- ✅ Ejemplos de uso añadidos
+- ✅ Troubleshooting guide
+- ✅ Security best practices
+
+### 2026-03-03
+- ✅ Versión inicial del módulo
+- ✅ S3 + CloudFront configurado
+- ✅ Auto-upload de archivos
+- ✅ Cache behaviors optimizados
+
+---
+
+## Soporte
+
+**Documentación:**
+- `/deployment/terraform/DEPLOYMENT_SUMMARY.md`
+- `/deployment/terraform/MANUAL_CHANGES_APPLIED.md`
+
+**Contacto:**
+- Equipo de Platform Engineering

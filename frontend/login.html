@@ -9,6 +9,10 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- AWS SDK for Cognito -->
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1691.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.12/dist/amazon-cognito-identity.min.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -486,7 +490,15 @@
     <script>
         const API_URL = 'https://qw4ech2k0e.execute-api.eu-west-1.amazonaws.com';
         const APP_ID = 'e61e1af9-8992-4bdf-be65-9cad86f34da0'; // identity-mgmt
-        const REDIRECT_URL = '/dashboard/index.html';
+        const REDIRECT_URL = '/index.html';
+        
+        // Cognito Configuration
+        const COGNITO_CONFIG = {
+            UserPoolId: 'eu-west-1_UaMIbG9pD',
+            ClientId: '15b1ub3navqgh0ushcqo2ngfsk'
+        };
+        
+        const userPool = new AmazonCognitoIdentity.CognitoUserPool(COGNITO_CONFIG);
         
         let tempEmail = '';
         let tempPassword = '';
@@ -624,10 +636,37 @@
                 }
 
                 if (response.ok && responseData.success) {
-                    localStorage.setItem('auth_token', responseData.token);
-                    localStorage.setItem('user_data', JSON.stringify(responseData.user));
-                    localStorage.setItem('token_expires_at', responseData.expiresAt);
-                    window.location.href = REDIRECT_URL;
+                    // Create Cognito session
+                    const authenticationData = {
+                        Username: email,
+                        Password: password,
+                    };
+                    const authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails(authenticationData);
+                    
+                    const userData = {
+                        Username: email,
+                        Pool: userPool
+                    };
+                    const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+                    
+                    cognitoUser.authenticateUser(authenticationDetails, {
+                        onSuccess: function(result) {
+                            console.log('✅ Cognito session created');
+                            // Also store in localStorage for backward compatibility
+                            localStorage.setItem('auth_token', responseData.token);
+                            localStorage.setItem('user_data', JSON.stringify(responseData.user));
+                            localStorage.setItem('token_expires_at', responseData.expiresAt);
+                            window.location.href = REDIRECT_URL;
+                        },
+                        onFailure: function(err) {
+                            console.error('❌ Cognito auth failed:', err);
+                            // Still redirect even if Cognito fails
+                            localStorage.setItem('auth_token', responseData.token);
+                            localStorage.setItem('user_data', JSON.stringify(responseData.user));
+                            localStorage.setItem('token_expires_at', responseData.expiresAt);
+                            window.location.href = REDIRECT_URL;
+                        }
+                    });
                 } else {
                     showAlert('error', responseData.message || 'Login error');
                     loginBtn.disabled = false;

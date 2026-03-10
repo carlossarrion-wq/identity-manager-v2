@@ -37,8 +37,10 @@ def build_response(
     return {
         'statusCode': status_code,
         'headers': {
-            'Content-Type': 'application/json'
-            # CORS headers are managed by Lambda Function URL configuration
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
+            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
         },
         'body': json.dumps(body, default=str)
     }
@@ -77,8 +79,10 @@ def build_error_response(
     return {
         'statusCode': status_code,
         'headers': {
-            'Content-Type': 'application/json'
-            # CORS headers are managed by Lambda Function URL configuration
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
+            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
         },
         'body': json.dumps(body, default=str)
     }

@@ -1,69 +1,66 @@
 /**
  * Authentication Guard
  * ====================
- * Protects dashboard pages by checking for valid authentication token
+ * Protects dashboard pages by checking for valid Cognito authentication
  */
 
-(function() {
+(async function() {
     'use strict';
     
-    console.log('🔒 Auth Guard: Checking authentication...');
+    console.log('🔒 Auth Guard: Checking Cognito authentication...');
     
-    // Check if user is authenticated
-    function checkAuth() {
-        const token = localStorage.getItem('auth_token');
-        const userData = localStorage.getItem('user_data');
-        const expiresAt = localStorage.getItem('token_expires_at');
-        
-        // If no token, redirect to login
-        if (!token || !userData) {
-            console.warn('⚠️ Auth Guard: No authentication token found');
+    // Check if user is authenticated with Cognito
+    async function checkAuth() {
+        try {
+            // Try to get current Cognito session
+            const session = await Auth.currentSession();
+            const idToken = session.getIdToken();
+            const user = await Auth.currentAuthenticatedUser();
+            
+            console.log('✅ Auth Guard: User is authenticated with Cognito');
+            console.log('👤 User:', user.username);
+            
+            // idToken might be a function or object, handle both cases
+            const payload = typeof idToken.getJwtToken === 'function' 
+                ? JSON.parse(atob(idToken.getJwtToken().split('.')[1]))
+                : idToken.payload;
+            
+            if (payload && payload.email) {
+                console.log('📧 Email:', payload.email);
+            }
+            
+            return true;
+        } catch (error) {
+            console.warn('⚠️ Auth Guard: No valid Cognito session found');
+            console.error('Auth error:', error);
             redirectToLogin();
             return false;
         }
-        
-        // Check if token is expired
-        if (expiresAt) {
-            const expiryDate = new Date(expiresAt);
-            const now = new Date();
-            
-            if (now >= expiryDate) {
-                console.warn('⚠️ Auth Guard: Token has expired');
-                clearAuth();
-                redirectToLogin();
-                return false;
-            }
-        }
-        
-        console.log('✅ Auth Guard: User is authenticated');
-        return true;
-    }
-    
-    // Clear authentication data
-    function clearAuth() {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user_data');
-        localStorage.removeItem('token_expires_at');
     }
     
     // Redirect to login page
     function redirectToLogin() {
         console.log('🔄 Auth Guard: Redirecting to login...');
-        window.location.href = '/frontend/login.html';
+        const loginUrl = window.location.origin + '/login.html';
+        window.location.href = loginUrl;
     }
     
     // Run auth check immediately
-    if (!checkAuth()) {
+    const isAuthenticated = await checkAuth();
+    if (!isAuthenticated) {
         // Stop page execution if not authenticated
         throw new Error('Authentication required');
     }
     
-    // Optional: Check auth periodically (every 30 seconds)
-    setInterval(function() {
-        if (!checkAuth()) {
+    // Optional: Check auth periodically (every 5 minutes)
+    setInterval(async function() {
+        try {
+            await Auth.currentSession();
+        } catch (error) {
             console.warn('⚠️ Auth Guard: Session expired during use');
+            redirectToLogin();
         }
-    }, 30000); // 30 seconds
+    }, 300000); // 5 minutes
     
 })();
 

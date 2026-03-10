@@ -5,8 +5,8 @@
  */
 
 const API_CONFIG = {
-    // Lambda Function URL
-    endpoint: 'https://vgrajswesgyujgxpw5g65tw5py0kihum.lambda-url.eu-west-1.on.aws/',
+    // API Gateway endpoint (secured with Cognito Authorizer)
+    endpoint: 'https://flzqvv3jt4.execute-api.eu-west-1.amazonaws.com/dev',
     
     // Request timeout (30 seconds)
     timeout: 30000,
@@ -41,8 +41,102 @@ const DASHBOARD_CONFIG = {
     }
 };
 
+// Cognito Configuration
+const COGNITO_CONFIG = {
+    region: 'eu-west-1',
+    userPoolId: 'eu-west-1_UaMIbG9pD',
+    userPoolWebClientId: '15b1ub3navqgh0ushcqo2ngfsk',
+};
+
+// Wait for Cognito SDK to load
+if (typeof AmazonCognitoIdentity === 'undefined') {
+    console.error('❌ AmazonCognitoIdentity not loaded! Waiting...');
+    // Retry after a short delay
+    setTimeout(() => {
+        if (typeof AmazonCognitoIdentity !== 'undefined') {
+            initializeCognito();
+        } else {
+            console.error('❌ AmazonCognitoIdentity still not available after delay');
+        }
+    }, 1000);
+} else {
+    initializeCognito();
+}
+
+function initializeCognito() {
+    console.log('🔧 Initializing Cognito...');
+    
+    // Configure Cognito User Pool
+    const poolData = {
+        UserPoolId: COGNITO_CONFIG.userPoolId,
+        ClientId: COGNITO_CONFIG.userPoolWebClientId
+    };
+
+    const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+
+    // Create Auth wrapper compatible with Amplify API
+    window.Auth = {
+        currentSession: function() {
+            return new Promise((resolve, reject) => {
+                const cognitoUser = userPool.getCurrentUser();
+                if (!cognitoUser) {
+                    reject(new Error('No current user'));
+                    return;
+                }
+                
+                cognitoUser.getSession((err, session) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    
+                    if (!session.isValid()) {
+                        reject(new Error('Session is not valid'));
+                        return;
+                    }
+                    
+                    resolve({
+                        getIdToken: () => ({
+                            getJwtToken: () => session.getIdToken().getJwtToken()
+                        }),
+                        getAccessToken: () => ({
+                            getJwtToken: () => session.getAccessToken().getJwtToken()
+                        })
+                    });
+                });
+            });
+        },
+        
+        currentAuthenticatedUser: function() {
+            return new Promise((resolve, reject) => {
+                const cognitoUser = userPool.getCurrentUser();
+                if (!cognitoUser) {
+                    reject(new Error('No current user'));
+                    return;
+                }
+                
+                cognitoUser.getSession((err, session) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    
+                    resolve({
+                        username: cognitoUser.getUsername(),
+                        attributes: session.getIdToken().payload
+                    });
+                });
+            });
+        }
+    };
+
+    console.log('✅ Cognito configured');
+    console.log('✅ window.Auth is now available');
+}
+
 // Export for use in other modules
 window.API_CONFIG = API_CONFIG;
 window.DASHBOARD_CONFIG = DASHBOARD_CONFIG;
+window.COGNITO_CONFIG = COGNITO_CONFIG;
 
 console.log('✅ Configuration loaded');

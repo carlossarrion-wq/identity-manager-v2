@@ -125,9 +125,16 @@ resource "aws_iam_role_policy" "lambda_cognito" {
           "cognito-idp:AdminRemoveUserFromGroup",
           "cognito-idp:AdminListGroupsForUser",
           "cognito-idp:AdminSetUserPassword",
+          "cognito-idp:AdminUpdateUserAttributes",
+          "cognito-idp:AdminDisableUser",
+          "cognito-idp:AdminEnableUser",
           "cognito-idp:ListUsers",
           "cognito-idp:ListUsersInGroup",
-          "cognito-idp:ListGroups"
+          "cognito-idp:ListGroups",
+          "cognito-idp:GetGroup",
+          "cognito-idp:CreateGroup",
+          "cognito-idp:DeleteGroup",
+          "cognito-idp:UpdateGroup"
         ]
         Resource = var.cognito_user_pool_arn
       }
@@ -184,6 +191,11 @@ resource "aws_lambda_function" "api" {
   }
 
   # VPC Configuration (opcional)
+  # IMPORTANTE: Esta Lambda NO debe estar en VPC a menos que:
+  # 1. Se cree un VPC Endpoint para Secrets Manager (com.amazonaws.region.secretsmanager)
+  # 2. Se cree un VPC Endpoint para Cognito (com.amazonaws.region.cognito-idp)
+  # 3. O las subnets tengan NAT Gateway para acceso a internet
+  # Sin esto, la Lambda tendrá timeout al acceder a Secrets Manager y Cognito
   dynamic "vpc_config" {
     for_each = var.vpc_config != null ? [var.vpc_config] : []
     content {

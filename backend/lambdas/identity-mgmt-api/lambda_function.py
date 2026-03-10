@@ -75,6 +75,67 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     logger.info(f"[{request_id}] Iniciando procesamiento de request")
     
     try:
+        # ============================================================
+        # VALIDACIÓN DE AUTENTICACIÓN Y AUTORIZACIÓN
+        # ============================================================
+        
+        # Extraer contexto del Authorizer custom
+        authorizer_context = event.get('requestContext', {}).get('authorizer', {})
+        
+        if not authorizer_context or 'sub' not in authorizer_context:
+            logger.warning(f"[{request_id}] No authorizer context found - authentication required")
+            return build_error_response(
+                'UNAUTHORIZED',
+                'Authentication required',
+                401
+            )
+        
+        # Extraer información del usuario del contexto del authorizer
+        user_id = authorizer_context.get('sub')
+        user_email = authorizer_context.get('email')
+        user_name = user_email  # El authorizer no pasa 'name', solo email
+        
+        logger.info(f"[{request_id}] Request from user: {user_email} (ID: {user_id})")
+        
+        # DEBUG: Log del contexto completo del authorizer
+        logger.info(f"[{request_id}] Authorizer context keys: {list(authorizer_context.keys())}")
+        logger.info(f"[{request_id}] Authorizer context: {json.dumps(authorizer_context)}")
+        
+        # Parsear app_permissions del contexto del authorizer (vienen como string JSON)
+        app_permissions_str = authorizer_context.get('app_permissions', '[]')
+        logger.info(f"[{request_id}] app_permissions_str type: {type(app_permissions_str)}, value: {app_permissions_str}")
+        
+        try:
+            app_permissions = json.loads(app_permissions_str) if isinstance(app_permissions_str, str) else app_permissions_str
+            logger.info(f"[{request_id}] Parsed app_permissions: {app_permissions}")
+        except json.JSONDecodeError as e:
+            logger.error(f"[{request_id}] Invalid app_permissions format in authorizer context: {e}")
+            app_permissions = []
+        
+        # Verificar permiso de identity-mgmt
+        identity_mgmt_perm = None
+        for perm in app_permissions:
+            if perm.get('app_name') == 'identity-mgmt':
+                identity_mgmt_perm = perm
+                break
+        
+        if not identity_mgmt_perm:
+            logger.warning(f"[{request_id}] User {user_email} has no identity-mgmt permissions")
+            return build_error_response(
+                'FORBIDDEN',
+                'You do not have permissions to access Identity Manager',
+                403
+            )
+        
+        permission_level = identity_mgmt_perm.get('permission_level', 0)
+        permission_type = identity_mgmt_perm.get('permission_type', 'read')
+        
+        logger.info(f"[{request_id}] User has {permission_type} permission (level {permission_level})")
+        
+        # ============================================================
+        # PROCESAMIENTO DE LA OPERACIÓN
+        # ============================================================
+        
         # Inicializar servicios
         initialize_services()
         
@@ -95,6 +156,63 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             )
         
         logger.info(f"[{request_id}] Operación solicitada: {operation}")
+        
+        # Validar nivel de permiso según operación
+        OPERATION_REQUIREMENTS = {
+            # Operaciones de lectura - nivel 10 (read)
+            'list_users': 10,
+            'list_tokens': 10,
+            'list_profiles': 10,
+            'list_groups': 10,
+            'get_user_permissions': 10,
+            'list_all_permissions': 10,
+            'list_permission_types': 10,
+            'list_applications': 10,
+            'list_modules': 10,
+            'get_config': 10,
+            'get_proxy_usage_summary': 10,
+            'get_proxy_usage_by_hour': 10,
+            'get_proxy_usage_by_team': 10,
+            'get_proxy_usage_by_day': 10,
+            'get_proxy_usage_response_status': 10,
+            'get_proxy_usage_trend': 10,
+            'get_proxy_usage_by_user': 10,
+            'get_user_quotas_today': 10,
+            
+            # Operaciones de escritura - nivel 50 (write)
+            'create_user': 50,
+            'create_token': 50,
+            'revoke_token': 50,
+            'restore_token': 50,
+            'assign_app_permission': 50,
+            'assign_module_permission': 50,
+            'revoke_app_permission': 50,
+            'revoke_module_permission': 50,
+            'regenerate_token': 50,
+            
+            # Operaciones administrativas - nivel 100 (admin)
+            'delete_user': 100,
+            'delete_token': 100,
+            'reset_password': 100,
+            'block_user': 100,
+            'unblock_user': 100,
+            'set_admin_safe': 100,
+        }
+        
+        required_level = OPERATION_REQUIREMENTS.get(operation, 100)  # Por defecto requiere admin
+        
+        if permission_level < required_level:
+            logger.warning(
+                f"[{request_id}] User {user_email} attempted {operation} "
+                f"with insufficient permissions (has {permission_level}, needs {required_level})"
+            )
+            return build_error_response(
+                'FORBIDDEN',
+                f'Operation "{operation}" requires permission level {required_level}. You have level {permission_level}.',
+                403
+            )
+        
+        logger.info(f"[{request_id}] Operation {operation} authorized for {user_email}")
         
         # Validar request según operación
         validation_error = validate_request(operation, body)

@@ -3,12 +3,12 @@
 # ============================================================================
 
 variable "function_name" {
-  description = "Nombre de la función Lambda (debe seguir nomenclatura: identity-mgmt-<env>-api-lmbd)"
+  description = "Nombre de la función Lambda (recomendado: identity-mgmt-<env>-api-lmbd o login-authorization-service)"
   type        = string
 
   validation {
-    condition     = can(regex("^identity-mgmt-(dev|pre|pro)-api-lmbd$", var.function_name))
-    error_message = "El nombre debe seguir el formato: identity-mgmt-<env>-api-lmbd donde env es dev, pre o pro"
+    condition     = can(regex("^[a-zA-Z0-9_-]+$", var.function_name))
+    error_message = "El nombre debe contener solo letras, números, guiones y guiones bajos"
   }
 }
 

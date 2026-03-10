@@ -165,8 +165,8 @@ module "lambda" {
   
   # Optional features
   enable_xray          = true
-  create_function_url  = true  # Para testing
-  create_alarms        = false # Disabled for dev
+  create_function_url  = false  # SECURITY: No public URL (use API Gateway)
+  create_alarms        = false  # Disabled for dev
   
   tags = {
     Environment = "dev"
@@ -180,7 +180,7 @@ module "auth_lambda" {
   source = "../../modules/lambda"
 
   function_name    = "login-authorization-service"
-  lambda_zip_path  = "../../../backend/lambdas/auth-lambda"
+  lambda_zip_path  = "/Users/csarrion/Cline/identity-manager-v2/deployment/terraform/lambda-packages/auth-lambda-latest.zip"
   
   timeout          = 30
   memory_size      = 512
@@ -309,7 +309,7 @@ output "auth_lambda_function_arn" {
 
 output "auth_lambda_role_arn" {
   description = "ARN del rol IAM de la Lambda de autenticación"
-  value       = module.auth_lambda.role_arn
+  value       = module.auth_lambda.function_role_arn
 }
 
 # Frontend Outputs
