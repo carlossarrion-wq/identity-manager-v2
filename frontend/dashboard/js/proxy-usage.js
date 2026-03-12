@@ -171,7 +171,7 @@ async function loadUsageData() {
             api.request('get_proxy_usage_by_day', { filters }),
             api.request('get_proxy_usage_response_status', { filters }),
             api.request('get_proxy_usage_trend', { filters }),
-            api.request('get_proxy_usage_by_user', { filters, page: currentPage, page_size: pageSize })
+            api.request('get_proxy_usage_by_user', { filters, pagination: { page: 1, page_size: 100 } })
         ]);
         
         console.log('📊 API Response - Summary:', summary);
@@ -241,13 +241,14 @@ async function loadUsageData() {
             }
         });
         
-        // Update table with new pagination
+        // Update table with client-side pagination
+        // Backend returns all users, we paginate in frontend
         usageData = byUserData.users;
-        totalUsers = byUserData.pagination.total_records;
+        totalUsers = byUserData.users.length;
         
-        // Initialize pagination data
-        usagePagination.allData = usageData;
-        usagePagination.filteredData = usageData;
+        // Initialize pagination data with all users
+        usagePagination.allData = byUserData.users;
+        usagePagination.filteredData = byUserData.users;
         usagePagination.currentPage = 1;
         
         // Render with new pagination
