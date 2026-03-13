@@ -396,7 +396,7 @@ class ProxyUsageService:
         start_date: datetime,
         end_date: datetime,
         page: int = 1,
-        page_size: int = 10
+        page_size: int = 100
     ) -> Dict[str, Any]:
         """
         Obtener uso detallado por usuario con paginación
@@ -410,7 +410,7 @@ class ProxyUsageService:
         Returns:
             Diccionario con datos de usuarios y paginación
         """
-        logger.info(f"Obteniendo uso por usuario: página {page}, tamaño {page_size}")
+        logger.info(f"🔍 get_usage_by_user called with: page={page}, page_size={page_size}, start={start_date}, end={end_date}")
         
         offset = (page - 1) * page_size
         
