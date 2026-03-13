@@ -1145,7 +1145,7 @@ def handle_get_proxy_usage_by_user(body: Dict[str, Any], request_id: str) -> Dic
     start_date = _parse_date_filter(filters['start_date'], is_end_date=False)
     end_date = _parse_date_filter(filters['end_date'], is_end_date=True)
     page = pagination.get('page', 1)
-    page_size = pagination.get('page_size', 10)
+    page_size = pagination.get('page_size', 100)
     
     logger.info(f"[{request_id}] Date range: {start_date} to {end_date}")
     
