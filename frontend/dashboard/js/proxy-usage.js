@@ -177,14 +177,14 @@ async function loadUsageData() {
         console.log('📊 API Response - Summary:', summary);
         console.log('📊 API Response - ByHour:', byHour);
         
-        // Check if data is nested (API returns {data: {data: {...}}})
-        const summaryData = summary;
-        const byHourData = byHour;
-        const byTeamData = byTeam;
-        const byDayData = byDay;
-        const responseStatusData = responseStatus;
-        const trendData = trend;
-        const byUserData = byUser;
+        // Extract data from API response (API returns {success: true, data: {...}})
+        const summaryData = summary.data || summary;
+        const byHourData = byHour.data || byHour;
+        const byTeamData = byTeam.data || byTeam;
+        const byDayData = byDay.data || byDay;
+        const responseStatusData = responseStatus.data || responseStatus;
+        const trendData = trend.data || trend;
+        const byUserData = byUser.data || byUser;
         
         // Update KPIs - use requestAnimationFrame to ensure DOM is ready
         requestAnimationFrame(() => {
