@@ -259,6 +259,7 @@ function renderPermissionsTable(permissions) {
 async function showAssignPermissionModal() {
     const modal = document.getElementById('assign-permission-modal');
     if (modal) {
+        // Show modal immediately for better UX
         modal.classList.add('show');
         
         // Reset form
@@ -266,8 +267,11 @@ async function showAssignPermissionModal() {
         document.getElementById('app-permission-fields').style.display = 'none';
         document.getElementById('module-permission-fields').style.display = 'none';
         
-        // Load users for dropdown
-        await loadUsersForPermissionDropdown();
+        // Load users dropdown in background (non-blocking)
+        loadUsersForPermissionDropdown().catch(error => {
+            console.error('Error loading users dropdown:', error);
+            showAlert('error', 'Error loading users');
+        });
     }
 }
 
@@ -276,7 +280,8 @@ async function showAssignPermissionModal() {
  */
 async function loadUsersForPermissionDropdown() {
     try {
-        const data = await api.listUsers();
+        // Use light version for dropdown - 8x faster, only needs email and name
+        const data = await api.listUsersLight();
         const select = document.getElementById('perm-user');
         
         if (select) {

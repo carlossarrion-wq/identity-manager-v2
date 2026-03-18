@@ -139,7 +139,7 @@ function showTab(tabId) {
 async function loadStatistics() {
     try {
         const [usersData, tokensData, profilesData, groupsData] = await Promise.all([
-            api.listUsers(),
+            api.listUsersLight(),  // Optimized: only need count, not full data
             api.listTokens({ status: 'active' }),
             api.listProfiles({ is_active: true }),
             api.listGroups()
@@ -358,16 +358,21 @@ function renderTokensTable(tokens) {
 }
 
 async function showCreateTokenModal() {
-    // Load users and profiles for dropdowns
-    await Promise.all([
-        loadUsersForDropdown(),
-        loadProfilesForDropdown()
-    ]);
-    
+    // Show modal immediately for better UX
     document.getElementById('create-token-modal').classList.add('show');
     document.getElementById('create-token-form').reset();
     document.getElementById('token-result').style.display = 'none';
     document.getElementById('create-token-form').style.display = 'block';
+    
+    // Load dropdowns in background (non-blocking)
+    // Users and profiles load in parallel
+    Promise.all([
+        loadUsersForDropdown(),
+        loadProfilesForDropdown()
+    ]).catch(error => {
+        console.error('Error loading dropdown data:', error);
+        showAlert('error', 'Error loading form data');
+    });
 }
 
 function closeCreateTokenModal() {
@@ -376,7 +381,8 @@ function closeCreateTokenModal() {
 
 async function loadUsersForDropdown() {
     try {
-        const data = await api.listUsers();
+        // Use light version for dropdown - 8x faster, only needs email and name
+        const data = await api.listUsersLight();
         const select = document.getElementById('token-user');
         
         select.innerHTML = '<option value="">Select a user...</option>' +

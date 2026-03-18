@@ -170,6 +170,10 @@ class IdentityManagerAPI {
         return await this.request('list_users', { filters, pagination });
     }
 
+    async listUsersLight(filters = {}, pagination = {}) {
+        return await this.request('list_users_light', { filters, pagination });
+    }
+
     async createUser(email, person, group, temporaryPassword = null, sendEmail = true, autoRegenerate = true) {
         return await this.request('create_user', {
             data: {

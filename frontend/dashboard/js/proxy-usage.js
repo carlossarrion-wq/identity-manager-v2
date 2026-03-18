@@ -178,13 +178,13 @@ async function loadUsageData() {
         console.log('📊 API Response - ByHour:', byHour);
         
         // Check if data is nested (API returns {data: {data: {...}}})
-        const summaryData = summary.data || summary;
-        const byHourData = byHour.data || byHour;
-        const byTeamData = byTeam.data || byTeam;
-        const byDayData = byDay.data || byDay;
-        const responseStatusData = responseStatus.data || responseStatus;
-        const trendData = trend.data || trend;
-        const byUserData = byUser.data || byUser;
+        const summaryData = summary;
+        const byHourData = byHour;
+        const byTeamData = byTeam;
+        const byDayData = byDay;
+        const responseStatusData = responseStatus;
+        const trendData = trend;
+        const byUserData = byUser;
         
         // Update KPIs - use requestAnimationFrame to ensure DOM is ready
         requestAnimationFrame(() => {
@@ -241,14 +241,39 @@ async function loadUsageData() {
             }
         });
         
-        // Update table with client-side pagination
-        // Backend returns all users, we paginate in frontend
-        usageData = byUserData.users;
-        totalUsers = byUserData.users.length;
+        // Update table with pagination info from backend
+        // Backend returns paginated data, we need to request all pages
+        console.log('📊 API Response - ByUser pagination:', byUserData.pagination);
+        
+        // Check if we got all users or need to fetch more pages
+        const totalRecords = byUserData.pagination?.total_records || byUserData.users.length;
+        const totalPages = byUserData.pagination?.total_pages || 1;
+        
+        // If there are multiple pages, fetch all of them
+        if (totalPages > 1) {
+            console.log(`📄 Fetching ${totalPages} pages of user data...`);
+            const allUsers = [...byUserData.users];
+            
+            // Fetch remaining pages
+            for (let page = 2; page <= totalPages; page++) {
+                const pageData = await api.request('get_proxy_usage_by_user', { 
+                    filters, 
+                    pagination: { page: page, page_size: 100 } 
+                });
+                allUsers.push(...(pageData.users || []));
+            }
+            
+            usageData = allUsers;
+            totalUsers = allUsers.length;
+            console.log(`✅ Loaded all ${totalUsers} users from ${totalPages} pages`);
+        } else {
+            usageData = byUserData.users;
+            totalUsers = totalRecords;
+        }
         
         // Initialize pagination data with all users
-        usagePagination.allData = byUserData.users;
-        usagePagination.filteredData = byUserData.users;
+        usagePagination.allData = usageData;
+        usagePagination.filteredData = usageData;
         usagePagination.currentPage = 1;
         
         // Render with new pagination

@@ -259,6 +259,7 @@ def route_operation(operation: str, body: Dict[str, Any], request_id: str) -> Di
     operations = {
         # Operaciones de usuarios
         'list_users': handle_list_users,
+        'list_users_light': handle_list_users_light,
         'create_user': handle_create_user,
         'delete_user': handle_delete_user,
         
@@ -335,6 +336,31 @@ def handle_list_users(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
         limit=pagination.get('limit', 60),
         pagination_token=pagination.get('pagination_token')
     )
+    
+    return result
+
+
+def handle_list_users_light(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """
+    Listar usuarios de Cognito (versión LIGERA y RÁPIDA)
+    
+    Solo devuelve: user_id, email, person, status
+    NO obtiene grupos (elimina N llamadas adicionales a Cognito)
+    Ideal para dropdowns, selects, y listados simples
+    """
+    logger.info(f"[{request_id}] Listando usuarios (LIGHT mode)")
+    
+    filters = body.get('filters', {})
+    pagination = body.get('pagination', {})
+    
+    result = cognito_service.list_users_light(
+        group=filters.get('group'),
+        status=filters.get('status'),
+        limit=pagination.get('limit'),
+        pagination_token=pagination.get('pagination_token')
+    )
+    
+    logger.info(f"[{request_id}] Usuarios obtenidos (LIGHT): {result['total_count']}")
     
     return result
 
@@ -436,11 +462,14 @@ def handle_list_tokens(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
     filters = body.get('filters', {})
     pagination = body.get('pagination', {})
     
+    # Si no se especifica limit en pagination, no pasar ninguno (devuelve todos)
+    limit = pagination.get('limit') if 'limit' in pagination else None
+    
     result = database_service.list_tokens(
         user_id=filters.get('user_id'),
         status=filters.get('status', 'all'),
         profile_id=filters.get('profile_id'),
-        limit=pagination.get('limit', 50),
+        limit=limit,
         offset=pagination.get('offset', 0)
     )
     

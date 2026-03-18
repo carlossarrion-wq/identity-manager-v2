@@ -251,6 +251,21 @@ resource "aws_lambda_function_url" "api_url" {
 }
 
 # ============================================================================
+# Lambda Permission for API Gateway
+# ============================================================================
+
+resource "aws_lambda_permission" "api_gateway" {
+  count         = var.api_gateway_id != null ? 1 : 0
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.api.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  # Permitir invocación desde cualquier método/recurso del API Gateway
+  source_arn = "${var.api_gateway_execution_arn}/*/*"
+}
+
+# ============================================================================
 # CloudWatch Alarms
 # ============================================================================
 

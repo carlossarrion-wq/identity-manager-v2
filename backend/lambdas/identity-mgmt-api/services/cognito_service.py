@@ -28,8 +28,9 @@ class CognitoService:
         self,
         group: Optional[str] = None,
         status: Optional[str] = None,
-        limit: int = 60,
-        pagination_token: Optional[str] = None
+        limit: Optional[int] = None,
+        pagination_token: Optional[str] = None,
+        fetch_all: bool = True
     ) -> Dict[str, Any]:
         """
         Listar usuarios del User Pool
@@ -37,42 +38,55 @@ class CognitoService:
         Args:
             group: Filtrar por grupo (opcional)
             status: Filtrar por estado (opcional)
-            limit: Número máximo de resultados
-            pagination_token: Token para paginación
+            limit: Número máximo de resultados por página (None = sin límite, obtiene todos)
+            pagination_token: Token para paginación manual
+            fetch_all: Si es True, obtiene todos los usuarios automáticamente paginando
             
         Returns:
             Dict con lista de usuarios y token de paginación
         """
         try:
-            if group:
-                # Listar usuarios de un grupo específico
-                params = {
-                    'UserPoolId': self.user_pool_id,
-                    'GroupName': group,
-                    'Limit': limit
-                }
-                if pagination_token:
-                    params['NextToken'] = pagination_token
+            all_users_data = []
+            next_token = pagination_token
+            page_limit = limit if limit else 60  # Límite por página de Cognito
+            
+            # Si fetch_all es True, paginar automáticamente hasta obtener todos los usuarios
+            while True:
+                if group:
+                    # Listar usuarios de un grupo específico
+                    params = {
+                        'UserPoolId': self.user_pool_id,
+                        'GroupName': group,
+                        'Limit': page_limit
+                    }
+                    if next_token:
+                        params['NextToken'] = next_token
+                    
+                    response = self.client.list_users_in_group(**params)
+                    users_data = response.get('Users', [])
+                    next_token = response.get('NextToken')
+                else:
+                    # Listar todos los usuarios
+                    params = {
+                        'UserPoolId': self.user_pool_id,
+                        'Limit': page_limit
+                    }
+                    if next_token:
+                        params['PaginationToken'] = next_token
+                    
+                    response = self.client.list_users(**params)
+                    users_data = response.get('Users', [])
+                    next_token = response.get('PaginationToken')
                 
-                response = self.client.list_users_in_group(**params)
-                users_data = response.get('Users', [])
-                next_token = response.get('NextToken')
-            else:
-                # Listar todos los usuarios
-                params = {
-                    'UserPoolId': self.user_pool_id,
-                    'Limit': limit
-                }
-                if pagination_token:
-                    params['PaginationToken'] = pagination_token
+                all_users_data.extend(users_data)
                 
-                response = self.client.list_users(**params)
-                users_data = response.get('Users', [])
-                next_token = response.get('PaginationToken')
+                # Si no hay más páginas o no queremos obtener todos, salir del loop
+                if not next_token or not fetch_all:
+                    break
             
             # Formatear usuarios
             users = []
-            for user_data in users_data:
+            for user_data in all_users_data:
                 user = self._format_user(user_data)
                 
                 # Filtrar por estado si se especifica
@@ -84,9 +98,11 @@ class CognitoService:
                 
                 users.append(user)
             
+            logger.info(f"Total de usuarios obtenidos: {len(users)}")
+            
             return {
                 'users': users,
-                'pagination_token': next_token,
+                'pagination_token': next_token if not fetch_all else None,
                 'total_count': len(users)
             }
             
@@ -391,6 +407,94 @@ class CognitoService:
             elif error_code == 'InvalidParameterException':
                 raise ValueError(f'Contraseña inválida: {e.response["Error"]["Message"]}')
             logger.error(f"Error reseteando contraseña: {e}")
+            raise Exception(f"Error de Cognito: {e.response['Error']['Message']}")
+    
+    def list_users_light(
+        self,
+        group: Optional[str] = None,
+        status: Optional[str] = None,
+        limit: Optional[int] = None,
+        pagination_token: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Listar usuarios del User Pool (versión LIGERA y RÁPIDA)
+        
+        Solo devuelve: user_id, email, person
+        NO obtiene grupos (elimina N llamadas adicionales a Cognito)
+        
+        Args:
+            group: Filtrar por grupo (opcional)
+            status: Filtrar por estado (opcional)
+            limit: Número máximo de resultados (None = todos)
+            pagination_token: Token para paginación
+            
+        Returns:
+            Dict con lista de usuarios (solo campos esenciales)
+        """
+        try:
+            all_users_data = []
+            next_token = pagination_token
+            page_limit = limit if limit else 60
+            
+            # Paginar automáticamente hasta obtener todos
+            while True:
+                if group:
+                    params = {
+                        'UserPoolId': self.user_pool_id,
+                        'GroupName': group,
+                        'Limit': page_limit
+                    }
+                    if next_token:
+                        params['NextToken'] = next_token
+                    
+                    response = self.client.list_users_in_group(**params)
+                    users_data = response.get('Users', [])
+                    next_token = response.get('NextToken')
+                else:
+                    params = {
+                        'UserPoolId': self.user_pool_id,
+                        'Limit': page_limit
+                    }
+                    if next_token:
+                        params['PaginationToken'] = next_token
+                    
+                    response = self.client.list_users(**params)
+                    users_data = response.get('Users', [])
+                    next_token = response.get('PaginationToken')
+                
+                all_users_data.extend(users_data)
+                
+                if not next_token:
+                    break
+            
+            # Formatear usuarios (SOLO CAMPOS ESENCIALES)
+            users = []
+            for user_data in all_users_data:
+                attributes_list = user_data.get('UserAttributes', user_data.get('Attributes', []))
+                attributes = {attr['Name']: attr['Value'] for attr in attributes_list}
+                
+                user = {
+                    'user_id': user_data.get('Username'),
+                    'email': attributes.get('email', ''),
+                    'person': attributes.get('custom:person', attributes.get('name', '')),
+                    'status': user_data.get('UserStatus', 'UNKNOWN')
+                }
+                
+                # Filtrar por estado si se especifica
+                if status and user['status'] != status:
+                    continue
+                
+                users.append(user)
+            
+            logger.info(f"[LIGHT] Total de usuarios obtenidos: {len(users)}")
+            
+            return {
+                'users': users,
+                'total_count': len(users)
+            }
+            
+        except ClientError as e:
+            logger.error(f"Error listando usuarios (light): {e}")
             raise Exception(f"Error de Cognito: {e.response['Error']['Message']}")
     
     def _get_user_groups(self, username: str) -> List[str]:

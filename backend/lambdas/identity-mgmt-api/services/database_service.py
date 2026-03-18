@@ -173,7 +173,7 @@ class DatabaseService:
         user_id: Optional[str] = None,
         status: str = 'all',
         profile_id: Optional[str] = None,
-        limit: int = 50,
+        limit: Optional[int] = None,
         offset: int = 0
     ) -> Dict[str, Any]:
         """
@@ -183,7 +183,7 @@ class DatabaseService:
             user_id: Filtrar por usuario
             status: Filtrar por estado (active, revoked, expired, all)
             profile_id: Filtrar por perfil
-            limit: Límite de resultados
+            limit: Límite de resultados (None = sin límite, devuelve todos)
             offset: Offset para paginación
             
         Returns:
@@ -206,6 +206,8 @@ class DatabaseService:
                     t.is_revoked,
                     t.revoked_at,
                     t.revocation_reason,
+                    t.regenerated_at,
+                    t.regenerated_from_jti,
                     p.profile_name,
                     CASE 
                         WHEN t.is_revoked THEN 'revoked'
@@ -235,8 +237,12 @@ class DatabaseService:
                 elif status == 'expired':
                     query += " AND t.is_revoked = FALSE AND t.expires_at <= CURRENT_TIMESTAMP"
             
-            query += " ORDER BY t.issued_at DESC LIMIT %s OFFSET %s"
-            params.extend([limit, offset])
+            query += " ORDER BY t.issued_at DESC"
+            
+            # Solo aplicar LIMIT si se especifica
+            if limit is not None:
+                query += " LIMIT %s OFFSET %s"
+                params.extend([limit, offset])
             
             cursor.execute(query, params)
             tokens = cursor.fetchall()
@@ -249,8 +255,22 @@ class DatabaseService:
                 count_query += " AND t.cognito_user_id = %s"
                 count_params.append(user_id)
             
+            if profile_id:
+                count_query += " AND t.application_profile_id = %s"
+                count_params.append(profile_id)
+            
+            if status != 'all':
+                if status == 'active':
+                    count_query += " AND t.is_revoked = FALSE AND t.expires_at > CURRENT_TIMESTAMP"
+                elif status == 'revoked':
+                    count_query += " AND t.is_revoked = TRUE"
+                elif status == 'expired':
+                    count_query += " AND t.is_revoked = FALSE AND t.expires_at <= CURRENT_TIMESTAMP"
+            
             cursor.execute(count_query, count_params)
             total = cursor.fetchone()['total']
+            
+            logger.info(f"Total de tokens obtenidos: {len(tokens)} de {total}")
             
             return {
                 'tokens': [dict(token) for token in tokens],

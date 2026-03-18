@@ -143,6 +143,22 @@ variable "dlq_arn" {
 }
 
 # ============================================================================
+# API Gateway Configuration
+# ============================================================================
+
+variable "api_gateway_id" {
+  description = "ID del API Gateway que invocará la Lambda (opcional)"
+  type        = string
+  default     = null
+}
+
+variable "api_gateway_execution_arn" {
+  description = "ARN de ejecución del API Gateway (opcional)"
+  type        = string
+  default     = null
+}
+
+# ============================================================================
 # Tags
 # ============================================================================
 

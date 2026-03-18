@@ -156,6 +156,10 @@ module "lambda" {
   email_smtp_secret_name = module.secrets.email_smtp_secret_name
   email_smtp_secret_arn  = module.secrets.email_smtp_secret_arn
   
+  # API Gateway Configuration - Para permisos de invocación
+  api_gateway_id            = "flzqvv3jt4"
+  api_gateway_execution_arn = "arn:aws:execute-api:eu-west-1:701055077130:flzqvv3jt4"
+  
   # VPC Configuration - DISABLED for DEV
   # Lambda without VPC can access: Cognito (internet), RDS (public), Secrets Manager (internet)
   # vpc_config = {
