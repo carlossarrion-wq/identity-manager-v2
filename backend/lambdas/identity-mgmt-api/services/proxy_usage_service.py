@@ -32,7 +32,8 @@ class ProxyUsageService:
         self,
         start_date: datetime,
         end_date: datetime,
-        user_id: Optional[str] = None
+        user_id: Optional[str] = None,
+        team: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Obtener resumen de métricas (KPIs)
@@ -41,11 +42,12 @@ class ProxyUsageService:
             start_date: Fecha de inicio
             end_date: Fecha de fin
             user_id: ID de usuario opcional para filtrar
+            team: Equipo opcional para filtrar
             
         Returns:
             Diccionario con métricas agregadas
         """
-        logger.info(f"Obteniendo resumen de uso: {start_date} a {end_date}")
+        logger.info(f"Obteniendo resumen de uso: {start_date} a {end_date}, team={team}")
         
         # Calcular período anterior para comparación
         period_duration = end_date - start_date
@@ -53,10 +55,10 @@ class ProxyUsageService:
         prev_end = start_date
         
         # Obtener estadísticas del período actual
-        current_stats = self._get_period_stats(start_date, end_date, user_id)
+        current_stats = self._get_period_stats(start_date, end_date, user_id, team)
         
         # Obtener estadísticas del período anterior
-        previous_stats = self._get_period_stats(prev_start, prev_end, user_id)
+        previous_stats = self._get_period_stats(prev_start, prev_end, user_id, team)
         
         # Calcular cambios porcentuales
         result = {
@@ -93,7 +95,8 @@ class ProxyUsageService:
     def get_usage_by_hour(
         self,
         start_date: datetime,
-        end_date: datetime
+        end_date: datetime,
+        team: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Obtener distribución de uso por hora del día
@@ -101,13 +104,19 @@ class ProxyUsageService:
         Args:
             start_date: Fecha de inicio
             end_date: Fecha de fin
+            team: Equipo opcional para filtrar
             
         Returns:
             Diccionario con datos por hora
         """
-        logger.info(f"Obteniendo uso por hora: {start_date} a {end_date}")
+        logger.info(f"Obteniendo uso por hora: {start_date} a {end_date}, team={team}")
         
-        query = """
+        team_filter = "AND team = %s" if team else ""
+        params = [start_date, end_date]
+        if team:
+            params.append(team)
+        
+        query = f"""
             SELECT 
                 EXTRACT(HOUR FROM request_timestamp) as hour,
                 COUNT(*) as requests
@@ -115,11 +124,12 @@ class ProxyUsageService:
             WHERE request_timestamp >= %s
                 AND request_timestamp <= %s
                 AND response_status = 'success'
+                {team_filter}
             GROUP BY EXTRACT(HOUR FROM request_timestamp)
             ORDER BY hour
         """
         
-        results = self.db.execute_query(query, (start_date, end_date))
+        results = self.db.execute_query(query, tuple(params))
         
         # Crear array de 24 horas (0-23)
         hours_data = [0] * 24
@@ -147,7 +157,8 @@ class ProxyUsageService:
     def get_usage_by_team(
         self,
         start_date: datetime,
-        end_date: datetime
+        end_date: datetime,
+        team: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Obtener distribución de uso por equipo (agrupado por team)
@@ -155,13 +166,19 @@ class ProxyUsageService:
         Args:
             start_date: Fecha de inicio
             end_date: Fecha de fin
+            team: Equipo opcional para filtrar
             
         Returns:
             Diccionario con datos por equipo
         """
-        logger.info(f"Obteniendo uso por equipo: {start_date} a {end_date}")
+        logger.info(f"Obteniendo uso por equipo: {start_date} a {end_date}, team={team}")
         
-        query = """
+        team_filter = "AND team = %s" if team else ""
+        params = [start_date, end_date]
+        if team:
+            params.append(team)
+        
+        query = f"""
             SELECT 
                 COALESCE(team, 'N/A') as team,
                 COUNT(*) as requests
@@ -169,12 +186,13 @@ class ProxyUsageService:
             WHERE request_timestamp >= %s
                 AND request_timestamp <= %s
                 AND response_status = 'success'
+                {team_filter}
             GROUP BY team
             ORDER BY requests DESC
             LIMIT 10
         """
         
-        results = self.db.execute_query(query, (start_date, end_date))
+        results = self.db.execute_query(query, tuple(params))
         
         labels = []
         values = []
@@ -203,7 +221,8 @@ class ProxyUsageService:
     def get_usage_by_day(
         self,
         start_date: datetime,
-        end_date: datetime
+        end_date: datetime,
+        team: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Obtener distribución de uso por día
@@ -211,13 +230,19 @@ class ProxyUsageService:
         Args:
             start_date: Fecha de inicio
             end_date: Fecha de fin
+            team: Equipo opcional para filtrar
             
         Returns:
             Diccionario con datos por día
         """
-        logger.info(f"Obteniendo uso por día: {start_date} a {end_date}")
+        logger.info(f"Obteniendo uso por día: {start_date} a {end_date}, team={team}")
         
-        query = """
+        team_filter = "AND team = %s" if team else ""
+        params = [start_date, end_date]
+        if team:
+            params.append(team)
+        
+        query = f"""
             SELECT 
                 DATE(request_timestamp) as date,
                 COUNT(*) as requests
@@ -225,11 +250,12 @@ class ProxyUsageService:
             WHERE request_timestamp >= %s
                 AND request_timestamp <= %s
                 AND response_status = 'success'
+                {team_filter}
             GROUP BY DATE(request_timestamp)
             ORDER BY date
         """
         
-        results = self.db.execute_query(query, (start_date, end_date))
+        results = self.db.execute_query(query, tuple(params))
         
         labels = []
         values = []
@@ -257,7 +283,8 @@ class ProxyUsageService:
     def get_response_status(
         self,
         start_date: datetime,
-        end_date: datetime
+        end_date: datetime,
+        team: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Obtener distribución de estados de respuesta
@@ -265,24 +292,31 @@ class ProxyUsageService:
         Args:
             start_date: Fecha de inicio
             end_date: Fecha de fin
+            team: Equipo opcional para filtrar
             
         Returns:
             Diccionario con datos de estados
         """
-        logger.info(f"Obteniendo estados de respuesta: {start_date} a {end_date}")
+        logger.info(f"Obteniendo estados de respuesta: {start_date} a {end_date}, team={team}")
         
-        query = """
+        team_filter = "AND team = %s" if team else ""
+        params = [start_date, end_date]
+        if team:
+            params.append(team)
+        
+        query = f"""
             SELECT 
                 response_status,
                 COUNT(*) as count
             FROM "bedrock-proxy-usage-tracking-tbl"
             WHERE request_timestamp >= %s
                 AND request_timestamp <= %s
+                {team_filter}
             GROUP BY response_status
             ORDER BY count DESC
         """
         
-        results = self.db.execute_query(query, (start_date, end_date))
+        results = self.db.execute_query(query, tuple(params))
         
         # Mapeo de estados a etiquetas legibles
         status_labels = {
@@ -327,7 +361,8 @@ class ProxyUsageService:
     def get_usage_trend(
         self,
         start_date: datetime,
-        end_date: datetime
+        end_date: datetime,
+        team: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Obtener tendencia de uso por usuario a lo largo del tiempo
@@ -335,13 +370,19 @@ class ProxyUsageService:
         Args:
             start_date: Fecha de inicio
             end_date: Fecha de fin
+            team: Equipo opcional para filtrar
             
         Returns:
             Diccionario con series de tiempo por usuario (top 5)
         """
-        logger.info(f"Obteniendo tendencia de uso: {start_date} a {end_date}")
+        logger.info(f"Obteniendo tendencia de uso: {start_date} a {end_date}, team={team}")
         
-        query = """
+        team_filter = "AND team = %s" if team else ""
+        params = [start_date, end_date]
+        if team:
+            params.append(team)
+        
+        query = f"""
             SELECT 
                 DATE(request_timestamp) as date,
                 cognito_email as team,
@@ -350,11 +391,12 @@ class ProxyUsageService:
             WHERE request_timestamp >= %s
                 AND request_timestamp <= %s
                 AND response_status = 'success'
+                {team_filter}
             GROUP BY DATE(request_timestamp), cognito_email
             ORDER BY date, requests DESC
         """
         
-        results = self.db.execute_query(query, (start_date, end_date))
+        results = self.db.execute_query(query, tuple(params))
         
         # Organizar datos por equipo
         teams_data = {}
@@ -391,12 +433,42 @@ class ProxyUsageService:
             'datasets': datasets
         }
     
+    def get_available_teams(self) -> Dict[str, Any]:
+        """
+        Obtener lista de todos los equipos disponibles (sin límite)
+        
+        Returns:
+            Diccionario con lista de equipos
+        """
+        logger.info("Obteniendo lista completa de equipos disponibles")
+        
+        query = """
+            SELECT DISTINCT team
+            FROM "bedrock-proxy-usage-tracking-tbl"
+            WHERE team IS NOT NULL
+                AND team != ''
+                AND LOWER(team) NOT IN ('n/a', 'unknown')
+            ORDER BY team
+        """
+        
+        results = self.db.execute_query(query, ())
+        
+        teams = [row['team'] for row in results]
+        
+        logger.info(f"Encontrados {len(teams)} equipos únicos")
+        
+        return {
+            'teams': teams,
+            'total': len(teams)
+        }
+    
     def get_usage_by_user(
         self,
         start_date: datetime,
         end_date: datetime,
         page: int = 1,
-        page_size: int = 100
+        page_size: int = 100,
+        team: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Obtener uso detallado por usuario con paginación
@@ -406,16 +478,22 @@ class ProxyUsageService:
             end_date: Fecha de fin
             page: Número de página
             page_size: Tamaño de página
+            team: Equipo opcional para filtrar
             
         Returns:
             Diccionario con datos de usuarios y paginación
         """
-        logger.info(f"🔍 get_usage_by_user called with: page={page}, page_size={page_size}, start={start_date}, end={end_date}")
+        logger.info(f"🔍 get_usage_by_user called with: page={page}, page_size={page_size}, start={start_date}, end={end_date}, team={team}")
         
         offset = (page - 1) * page_size
         
+        team_filter = "AND team = %s" if team else ""
+        params = [start_date, end_date]
+        if team:
+            params.append(team)
+        
         # Query para obtener datos - solo peticiones exitosas, incluyendo team y person
-        query = """
+        query = f"""
             SELECT 
                 cognito_email as email,
                 cognito_user_id,
@@ -428,22 +506,25 @@ class ProxyUsageService:
             WHERE request_timestamp >= %s
                 AND request_timestamp <= %s
                 AND response_status = 'success'
+                {team_filter}
             GROUP BY cognito_email, cognito_user_id
             ORDER BY cost DESC
             LIMIT %s OFFSET %s
         """
         
         # Query para contar total - solo peticiones exitosas
-        count_query = """
+        count_query = f"""
             SELECT COUNT(DISTINCT cognito_email) as total
             FROM "bedrock-proxy-usage-tracking-tbl"
             WHERE request_timestamp >= %s
                 AND request_timestamp <= %s
                 AND response_status = 'success'
+                {team_filter}
         """
         
-        results = self.db.execute_query(query, (start_date, end_date, page_size, offset))
-        count_result = self.db.execute_query(count_query, (start_date, end_date))
+        query_params = params + [page_size, offset]
+        results = self.db.execute_query(query, tuple(query_params))
+        count_result = self.db.execute_query(count_query, tuple(params))
         
         total_records = count_result[0]['total'] if count_result else 0
         total_pages = (total_records + page_size - 1) // page_size
@@ -479,7 +560,8 @@ class ProxyUsageService:
         self,
         start_date: datetime,
         end_date: datetime,
-        user_id: Optional[str] = None
+        user_id: Optional[str] = None,
+        team: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Obtener estadísticas para un período
@@ -488,14 +570,23 @@ class ProxyUsageService:
             start_date: Fecha de inicio
             end_date: Fecha de fin
             user_id: ID de usuario opcional
+            team: Equipo opcional para filtrar
             
         Returns:
             Diccionario con estadísticas del período
         """
-        user_filter = "AND cognito_user_id = %s" if user_id else ""
+        filters = []
         params = [start_date, end_date]
+        
         if user_id:
+            filters.append("AND cognito_user_id = %s")
             params.append(user_id)
+        
+        if team:
+            filters.append("AND team = %s")
+            params.append(team)
+        
+        filter_clause = " ".join(filters)
         
         query = f"""
             SELECT 
@@ -507,7 +598,7 @@ class ProxyUsageService:
             WHERE request_timestamp >= %s
                 AND request_timestamp <= %s
                 AND response_status = 'success'
-                {user_filter}
+                {filter_clause}
         """
         
         result = self.db.execute_query(query, tuple(params))

@@ -177,6 +177,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'get_proxy_usage_response_status': 10,
             'get_proxy_usage_trend': 10,
             'get_proxy_usage_by_user': 10,
+            'get_available_teams': 10,
             'get_user_quotas_today': 10,
             
             # Operaciones de escritura - nivel 50 (write)
@@ -300,6 +301,7 @@ def route_operation(operation: str, body: Dict[str, Any], request_id: str) -> Di
         'get_proxy_usage_response_status': handle_get_proxy_usage_response_status,
         'get_proxy_usage_trend': handle_get_proxy_usage_trend,
         'get_proxy_usage_by_user': handle_get_proxy_usage_by_user,
+        'get_available_teams': handle_get_available_teams,
         
         # Operaciones de cuotas de usuarios
         'get_user_quotas_today': handle_get_user_quotas_today,
@@ -370,7 +372,7 @@ def handle_create_user(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
     logger.info(f"[{request_id}] Creando usuario")
     
     data = body.get('data', {})
-    email = data['email']
+    email = data['email'].lower()  # Normalizar email a minúsculas
     
     # Verificar si el usuario ya existe
     try:
@@ -1083,8 +1085,9 @@ def handle_get_proxy_usage_summary(body: Dict[str, Any], request_id: str) -> Dic
     logger.info(f"[{request_id}] Date range: {start_date} to {end_date}")
     
     user_id = filters.get('user_id')
+    team = filters.get('team')
     
-    result = proxy_usage_service.get_summary(start_date, end_date, user_id)
+    result = proxy_usage_service.get_summary(start_date, end_date, user_id, team)
     
     return {'success': True, 'data': result}
 
@@ -1096,10 +1099,11 @@ def handle_get_proxy_usage_by_hour(body: Dict[str, Any], request_id: str) -> Dic
     filters = body.get('filters', {})
     start_date = _parse_date_filter(filters['start_date'], is_end_date=False)
     end_date = _parse_date_filter(filters['end_date'], is_end_date=True)
+    team = filters.get('team')
     
     logger.info(f"[{request_id}] Date range: {start_date} to {end_date}")
     
-    result = proxy_usage_service.get_usage_by_hour(start_date, end_date)
+    result = proxy_usage_service.get_usage_by_hour(start_date, end_date, team)
     
     return {'success': True, 'data': result}
 
@@ -1111,10 +1115,11 @@ def handle_get_proxy_usage_by_team(body: Dict[str, Any], request_id: str) -> Dic
     filters = body.get('filters', {})
     start_date = _parse_date_filter(filters['start_date'], is_end_date=False)
     end_date = _parse_date_filter(filters['end_date'], is_end_date=True)
+    team = filters.get('team')
     
     logger.info(f"[{request_id}] Date range: {start_date} to {end_date}")
     
-    result = proxy_usage_service.get_usage_by_team(start_date, end_date)
+    result = proxy_usage_service.get_usage_by_team(start_date, end_date, team)
     
     return {'success': True, 'data': result}
 
@@ -1126,10 +1131,11 @@ def handle_get_proxy_usage_by_day(body: Dict[str, Any], request_id: str) -> Dict
     filters = body.get('filters', {})
     start_date = _parse_date_filter(filters['start_date'], is_end_date=False)
     end_date = _parse_date_filter(filters['end_date'], is_end_date=True)
+    team = filters.get('team')
     
     logger.info(f"[{request_id}] Date range: {start_date} to {end_date}")
     
-    result = proxy_usage_service.get_usage_by_day(start_date, end_date)
+    result = proxy_usage_service.get_usage_by_day(start_date, end_date, team)
     
     return {'success': True, 'data': result}
 
@@ -1141,10 +1147,11 @@ def handle_get_proxy_usage_response_status(body: Dict[str, Any], request_id: str
     filters = body.get('filters', {})
     start_date = _parse_date_filter(filters['start_date'], is_end_date=False)
     end_date = _parse_date_filter(filters['end_date'], is_end_date=True)
+    team = filters.get('team')
     
     logger.info(f"[{request_id}] Date range: {start_date} to {end_date}")
     
-    result = proxy_usage_service.get_response_status(start_date, end_date)
+    result = proxy_usage_service.get_response_status(start_date, end_date, team)
     
     return {'success': True, 'data': result}
 
@@ -1156,10 +1163,11 @@ def handle_get_proxy_usage_trend(body: Dict[str, Any], request_id: str) -> Dict[
     filters = body.get('filters', {})
     start_date = _parse_date_filter(filters['start_date'], is_end_date=False)
     end_date = _parse_date_filter(filters['end_date'], is_end_date=True)
+    team = filters.get('team')
     
     logger.info(f"[{request_id}] Date range: {start_date} to {end_date}")
     
-    result = proxy_usage_service.get_usage_trend(start_date, end_date)
+    result = proxy_usage_service.get_usage_trend(start_date, end_date, team)
     
     return {'success': True, 'data': result}
 
@@ -1175,10 +1183,20 @@ def handle_get_proxy_usage_by_user(body: Dict[str, Any], request_id: str) -> Dic
     end_date = _parse_date_filter(filters['end_date'], is_end_date=True)
     page = pagination.get('page', 1)
     page_size = pagination.get('page_size', 100)
+    team = filters.get('team')
     
     logger.info(f"[{request_id}] Date range: {start_date} to {end_date}")
     
-    result = proxy_usage_service.get_usage_by_user(start_date, end_date, page, page_size)
+    result = proxy_usage_service.get_usage_by_user(start_date, end_date, page, page_size, team)
+    
+    return {'success': True, 'data': result}
+
+
+def handle_get_available_teams(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Obtener lista completa de equipos disponibles (sin límite)"""
+    logger.info(f"[{request_id}] Obteniendo lista de equipos disponibles")
+    
+    result = proxy_usage_service.get_available_teams()
     
     return {'success': True, 'data': result}
 

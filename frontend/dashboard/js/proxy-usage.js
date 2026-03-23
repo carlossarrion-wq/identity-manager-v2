@@ -24,6 +24,13 @@ let dateRange = {
     end: null
 };
 
+// Current filters state
+let currentFilters = {
+    startDate: null,
+    endDate: null,
+    team: null
+};
+
 /**
  * Initialize the proxy usage dashboard
  */
@@ -39,6 +46,10 @@ function initProxyUsage() {
     dateRange.start = startOfDay;
     dateRange.end = endOfDay;
     
+    currentFilters.startDate = startOfDay;
+    currentFilters.endDate = endOfDay;
+    currentFilters.team = null;
+    
     console.log('📅 Date range set:', {
         start: dateRange.start.toISOString(),
         end: dateRange.end.toISOString()
@@ -51,6 +62,9 @@ function initProxyUsage() {
         startInput.value = now.toISOString().split('T')[0]; // YYYY-MM-DD format
         endInput.value = now.toISOString().split('T')[0];
     }
+    
+    // Load available teams
+    loadAvailableTeams();
     
     // Load initial data
     loadUsageData();
@@ -124,10 +138,15 @@ function setQuickFilter(filter) {
 function applyDateFilter() {
     const startInput = document.getElementById('start-date');
     const endInput = document.getElementById('end-date');
+    const teamSelect = document.getElementById('team-filter');
     
     if (startInput.value && endInput.value) {
         dateRange.start = new Date(startInput.value);
         dateRange.end = new Date(endInput.value);
+        
+        currentFilters.startDate = dateRange.start;
+        currentFilters.endDate = dateRange.end;
+        currentFilters.team = teamSelect.value || null;
         
         // Remove active class from quick filter buttons
         document.querySelectorAll('.quick-filters button').forEach(btn => {
@@ -138,6 +157,39 @@ function applyDateFilter() {
         loadUsageData();
     } else {
         alert('Please select both start and end dates');
+    }
+}
+
+/**
+ * Load available teams for the filter dropdown
+ */
+async function loadAvailableTeams() {
+    try {
+        console.log('Loading available teams...');
+        
+        // Use the new dedicated endpoint to get ALL teams (no limit)
+        const response = await api.request('get_available_teams', {});
+        const data = response.data || response;
+        
+        // Populate team dropdown
+        const teamSelect = document.getElementById('team-filter');
+        if (teamSelect && data.teams) {
+            // Clear existing options except "All Teams"
+            teamSelect.innerHTML = '<option value="">All Teams</option>';
+            
+            // Add team options - backend already filters out N/A and unknown
+            data.teams.forEach(team => {
+                const option = document.createElement('option');
+                option.value = team;
+                option.textContent = team;
+                teamSelect.appendChild(option);
+            });
+            
+            console.log(`✅ Loaded ${data.teams.length} teams (total: ${data.total})`);
+        }
+    } catch (error) {
+        console.error('Error loading teams:', error);
+        // Continue without teams - the dropdown will just show "All Teams"
     }
 }
 
@@ -160,6 +212,11 @@ async function loadUsageData() {
             start_date: formatDateForAPI(dateRange.start),
             end_date: formatDateForAPI(dateRange.end)
         };
+        
+        // Add team filter if selected
+        if (currentFilters.team) {
+            filters.team = currentFilters.team;
+        }
         
         console.log('📅 Filters sent to API:', filters);
         
