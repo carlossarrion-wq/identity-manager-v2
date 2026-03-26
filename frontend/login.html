@@ -490,7 +490,7 @@
     <script>
         const API_URL = 'https://qw4ech2k0e.execute-api.eu-west-1.amazonaws.com';
         const APP_ID = 'e61e1af9-8992-4bdf-be65-9cad86f34da0'; // identity-mgmt
-        const REDIRECT_URL = '/index.html';
+        const REDIRECT_URL = '/dashboard/index.html';
         
         // Cognito Configuration
         const COGNITO_CONFIG = {
@@ -597,7 +597,7 @@
             e.preventDefault();
             hideAlerts();
 
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.toLowerCase().trim();
             const password = document.getElementById('password').value;
             const loginBtn = document.getElementById('loginBtn');
 
@@ -727,7 +727,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        email: tempEmail,
+                        email: tempEmail.toLowerCase().trim(),
                         password: tempPassword,
                         new_password: newPassword,
                         app_id: APP_ID
