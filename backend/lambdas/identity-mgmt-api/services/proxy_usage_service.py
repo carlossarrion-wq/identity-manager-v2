@@ -492,7 +492,7 @@ class ProxyUsageService:
         if team:
             params.append(team)
         
-        # Query para obtener datos - solo peticiones exitosas, incluyendo team y person
+        # Query para obtener datos - todas las peticiones, contando errores
         query = f"""
             SELECT 
                 cognito_email as email,
@@ -500,25 +500,24 @@ class ProxyUsageService:
                 MAX(person) as person,
                 MAX(team) as team,
                 COUNT(*) as requests,
+                SUM(CASE WHEN response_status != 'success' THEN 1 ELSE 0 END) as error_count,
                 SUM(tokens_input + tokens_output) as tokens,
                 SUM(cost_usd) as cost
             FROM "bedrock-proxy-usage-tracking-tbl"
             WHERE request_timestamp >= %s
                 AND request_timestamp <= %s
-                AND response_status = 'success'
                 {team_filter}
             GROUP BY cognito_email, cognito_user_id
             ORDER BY cost DESC
             LIMIT %s OFFSET %s
         """
         
-        # Query para contar total - solo peticiones exitosas
+        # Query para contar total - todos los usuarios
         count_query = f"""
             SELECT COUNT(DISTINCT cognito_email) as total
             FROM "bedrock-proxy-usage-tracking-tbl"
             WHERE request_timestamp >= %s
                 AND request_timestamp <= %s
-                AND response_status = 'success'
                 {team_filter}
         """
         
@@ -536,6 +535,7 @@ class ProxyUsageService:
                 'person': row['person'] if row['person'] else row['email'],  # Usar person de BD, fallback a email
                 'team': row['team'] if row['team'] else 'N/A',  # Team de la BD
                 'requests': row['requests'],
+                'error_count': int(row['error_count']) if row['error_count'] else 0,
                 'tokens': int(row['tokens']) if row['tokens'] else 0,
                 'cost': float(row['cost']) if row['cost'] else 0.0
             })

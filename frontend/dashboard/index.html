@@ -17,7 +17,7 @@
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1691.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.12/dist/amazon-cognito-identity.min.js"></script>
     
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/dashboard.css?v=20260323">
 </head>
 <body>
     <!-- Connection Status Indicator -->
@@ -478,6 +478,12 @@
                             <label for="end-date">To:</label>
                             <input type="date" id="end-date">
                         </div>
+                        <div class="filter-group">
+                            <label for="team-filter">Team:</label>
+                            <select id="team-filter">
+                                <option value="">All Teams</option>
+                            </select>
+                        </div>
                         <button class="btn-primary" onclick="applyDateFilter()">Apply</button>
                     </div>
                     <div class="quick-filters">
@@ -586,6 +592,7 @@
                                 <th>Person</th>
                                 <th>Team</th>
                                 <th>Requests</th>
+                                <th>Errors</th>
                                 <th>Tokens</th>
                                 <th>Cost (USD)</th>
                             </tr>

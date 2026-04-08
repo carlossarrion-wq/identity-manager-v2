@@ -1589,6 +1589,16 @@ code {
     box-shadow: 0 0 0 3px rgba(49, 151, 149, 0.1);
 }
 
+/* Error count styling */
+.error-count {
+    font-weight: 500;
+}
+
+.error-count.has-errors {
+    color: #dc3545;
+    font-weight: 600;
+}
+
 /* User Quota Action Buttons */
 .btn-action.btn-block {
     background: rgba(229, 62, 62, 0.1);
