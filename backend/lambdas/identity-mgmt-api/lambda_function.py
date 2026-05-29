@@ -79,6 +79,22 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # VALIDACIÓN DE AUTENTICACIÓN Y AUTORIZACIÓN
         # ============================================================
         
+        # Parsear body del request primero para verificar la operación
+        if isinstance(event.get('body'), str):
+            body = json.loads(event['body'])
+        else:
+            body = event.get('body', {})
+        
+        operation = body.get('operation')
+        
+        # EXCEPCIÓN: regenerate_token no requiere authorizer context
+        # Esta operación es llamada por el proxy con autenticación AWS_IAM
+        if operation == 'regenerate_token':
+            logger.info(f"[{request_id}] Processing regenerate_token without authorizer context")
+            initialize_services()
+            return handle_regenerate_token(body, request_id)
+        
+        # Para todas las demás operaciones, validar authorizer context
         # Extraer contexto del Authorizer custom
         authorizer_context = event.get('requestContext', {}).get('authorizer', {})
         
