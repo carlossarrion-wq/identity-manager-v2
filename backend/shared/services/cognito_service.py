@@ -70,7 +70,7 @@ class CognitoService:
                 users_data = response.get('Users', [])
                 next_token = response.get('PaginationToken')
             
-            # Formatear usuarios
+            # Formatear usuarios (sin grupos primero para optimizar)
             users = []
             for user_data in users_data:
                 user = self._format_user(user_data)
@@ -79,10 +79,48 @@ class CognitoService:
                 if status and user['status'] != status:
                     continue
                 
-                # Obtener grupos del usuario
-                user['groups'] = self._get_user_groups(user['user_id'])
-                
                 users.append(user)
+            
+            # OPTIMIZACIÓN: Batch group fetching para evitar N+1 problem
+            # En lugar de 215 llamadas (1 por usuario), hacemos ~5-7 llamadas (1 por grupo)
+            if users:
+                try:
+                    # 1. Obtener todos los grupos del user pool
+                    all_groups_response = self.client.list_groups(
+                        UserPoolId=self.user_pool_id,
+                        Limit=60
+                    )
+                    
+                    # 2. Crear mapa de usuarios -> grupos
+                    user_groups_map = {user['user_id']: [] for user in users}
+                    
+                    # 3. Para cada grupo, obtener sus usuarios y mapear
+                    for group_data in all_groups_response.get('Groups', []):
+                        group_name = group_data['GroupName']
+                        try:
+                            group_users_response = self.client.list_users_in_group(
+                                UserPoolId=self.user_pool_id,
+                                GroupName=group_name,
+                                Limit=60
+                            )
+                            # Mapear usuarios a este grupo
+                            for group_user in group_users_response.get('Users', []):
+                                username = group_user.get('Username')
+                                if username in user_groups_map:
+                                    user_groups_map[username].append(group_name)
+                        except ClientError as e:
+                            logger.warning(f"Error obteniendo usuarios del grupo {group_name}: {e}")
+                            continue
+                    
+                    # 4. Asignar grupos a cada usuario
+                    for user in users:
+                        user['groups'] = user_groups_map.get(user['user_id'], [])
+                        
+                except ClientError as e:
+                    logger.warning(f"Error en batch group fetching, usando método individual: {e}")
+                    # Fallback al método original si falla el batch
+                    for user in users:
+                        user['groups'] = self._get_user_groups(user['user_id'])
             
             return {
                 'users': users,
@@ -164,10 +202,11 @@ class CognitoService:
             
             if temporary_password:
                 params['TemporaryPassword'] = temporary_password
-                # Solo usar SUPPRESS si no queremos enviar email
-                # Si queremos enviar email, NO especificar MessageAction (Cognito enviará automáticamente)
-                if not send_email:
-                    params['MessageAction'] = 'SUPPRESS'
+                # Establecer MessageAction explícitamente según send_email
+                if send_email:
+                    params['MessageAction'] = 'RESEND'  # Enviar email de bienvenida
+                else:
+                    params['MessageAction'] = 'SUPPRESS'  # Suprimir email de bienvenida
             
             # Log de depuración
             logger.info(f"Intentando crear usuario con params: {params}")
