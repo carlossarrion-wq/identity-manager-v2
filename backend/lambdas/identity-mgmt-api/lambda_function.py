@@ -92,7 +92,17 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if operation == 'regenerate_token':
             logger.info(f"[{request_id}] Processing regenerate_token without authorizer context")
             initialize_services()
-            return handle_regenerate_token(body, request_id)
+            result = handle_regenerate_token(body, request_id)
+            # Envolver resultado con ResponseBuilder para devolver statusCode correcto
+            if result.get('success'):
+                return build_response(result, status_code=200)
+            else:
+                return build_error_response(
+                    result.get('error', 'regeneration_failed'),
+                    result.get('message', 'Token regeneration failed'),
+                    status_code=400,
+                    details=result
+                )
         
         # Para todas las demás operaciones, validar authorizer context
         # Extraer contexto del Authorizer custom
