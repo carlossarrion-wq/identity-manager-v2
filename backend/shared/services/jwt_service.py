@@ -99,7 +99,13 @@ class JWTService:
         jti = str(uuid.uuid4())
         
         # Obtener primer grupo del usuario (team)
-        team = user_info.get('groups', ['unknown'])[0] if user_info.get('groups') else 'unknown'
+        groups = user_info.get('groups', [])
+        team = groups[0] if groups else 'unknown'
+        person = user_info.get('person', '')
+        
+        # Log para debugging
+        logger.info(f"Generating token - user_id: {user_info['user_id']}, "
+                    f"groups: {groups}, team: {team}, person: {person}")
         
         # Si no se proporcionan audiences, usar solo 'bedrock-proxy' por defecto
         if audiences is None:
@@ -111,7 +117,7 @@ class JWTService:
             'email': user_info['email'],
             'default_inference_profile': str(profile_info['profile_id']),
             'team': team,
-            'person': user_info.get('person', ''),
+            'person': person,
             'iss': 'identity-manager',
             'sub': user_info['user_id'],
             'aud': audiences,
