@@ -252,13 +252,12 @@ class TokenRegenerationService:
             else:
                 validity_period = '90_days'
             
-            # Prepare user and profile info for JWT generation
-            user_info = {
-                'user_id': str(user_id),
-                'email': token_info['email'],
-                'groups': [],  # Will be populated if needed
-                'person': ''
-            }
+            # Get user info from Cognito to include groups and person
+            user_info = self.cognito.get_user(str(user_id))
+            
+            # Ensure user_info has required fields
+            if not user_info.get('email'):
+                user_info['email'] = token_info['email']
             
             profile_info = {
                 'profile_id': str(token_info['profile_id']),
