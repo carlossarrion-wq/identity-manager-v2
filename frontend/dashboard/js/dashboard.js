@@ -1092,4 +1092,90 @@ function nextPermissionsPage() {
     }
 }
 
+// ============================================================================
+// EXPORT USERS TO CSV
+// ============================================================================
+
+function exportUsersToCSV() {
+    try {
+        const users = dashboardState.users;
+        
+        if (!users || users.length === 0) {
+            showAlert('warning', 'No users to export');
+            return;
+        }
+        
+        // CSV Headers
+        const headers = ['Email', 'Person', 'Status', 'Groups', 'Auto-Generate', 'Created', 'User ID'];
+        
+        // Convert users to CSV rows
+        const rows = users.map(user => {
+            const autoGenerate = user.auto_regenerate_tokens !== undefined ? user.auto_regenerate_tokens : true;
+            return [
+                escapeCSV(user.email || ''),
+                escapeCSV(user.person || ''),
+                escapeCSV(user.status || ''),
+                escapeCSV(user.groups?.join(', ') || ''),
+                autoGenerate ? 'Yes' : 'No',
+                formatDateForCSV(user.created_date),
+                escapeCSV(user.user_id || '')
+            ];
+        });
+        
+        // Combine headers and rows
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.join(','))
+        ].join('\n');
+        
+        // Create blob and download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        const filename = `users_export_${timestamp}.csv`;
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showAlert('success', `Successfully exported ${users.length} users to ${filename}`);
+        
+    } catch (error) {
+        console.error('Error exporting users:', error);
+        showAlert('error', `Error exporting users: ${error.message}`);
+    }
+}
+
+function escapeCSV(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+    
+    const stringValue = String(value);
+    
+    // If value contains comma, quote, or newline, wrap in quotes and escape quotes
+    if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+        return '"' + stringValue.replace(/"/g, '""') + '"';
+    }
+    
+    return stringValue;
+}
+
+function formatDateForCSV(dateString) {
+    if (!dateString) return '';
+    
+    try {
+        const date = new Date(dateString);
+        return date.toISOString().replace('T', ' ').slice(0, 19);
+    } catch (error) {
+        return dateString;
+    }
+}
+
 console.log('✅ Dashboard logic loaded');
