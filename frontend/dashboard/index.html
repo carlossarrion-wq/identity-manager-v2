@@ -84,10 +84,6 @@
                 <div class="section-header">
                     <h2>Users Management</h2>
                     <div style="display: flex; gap: 1rem;">
-                        <button class="btn-secondary" onclick="exportUsersToCSV()" title="Export all users to CSV">
-                            <span style="margin-right: 0.5rem;">📥</span>
-                            Export Users
-                        </button>
                         <button class="action-button create" onclick="showCreateUserModal()">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 16px; height: 16px;">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -128,20 +124,23 @@
                     </div>
                 </div>
                 
-                <!-- Users Table -->
-                <div class="card">
-                    <div class="table-controls">
-                        <h2>Users List</h2>
-                        <div class="search-pagination-wrapper">
-                            <input type="text" id="users-search" class="search-input" placeholder="Search users..." onkeyup="filterUsersTable()">
-                            <div class="pagination-controls">
-                                <span class="pagination-info" id="users-pagination-info">Showing 1-10 of 14 users</span>
-                                <button class="pagination-btn" id="users-prev-page" onclick="previousUsersPage()" disabled>←</button>
-                                <span class="pagination-page">Page <span id="users-current-page">1</span> of <span id="users-total-pages">2</span></span>
-                                <button class="pagination-btn" id="users-next-page" onclick="nextUsersPage()">→</button>
-                            </div>
-                        </div>
-                    </div>
+                 <!-- Users Table -->
+                 <div class="card">
+                     <div class="table-controls">
+                         <h2>Users List</h2>
+                         <div class="search-pagination-wrapper">
+                             <input type="text" id="users-search" class="search-input" placeholder="Search users..." onkeyup="filterUsersTable()">
+                             <div class="pagination-controls">
+                                 <span class="pagination-info" id="users-pagination-info">Showing 1-10 of 14 users</span>
+                                 <button class="pagination-btn" id="users-prev-page" onclick="previousUsersPage()" disabled>←</button>
+                                 <span class="pagination-page">Page <span id="users-current-page">1</span> of <span id="users-total-pages">2</span></span>
+                                 <button class="pagination-btn" id="users-next-page" onclick="nextUsersPage()">→</button>
+                             </div>
+                         </div>
+                     </div>
+                     <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+                         <button class="export-button" onclick="exportUsersToCSV()">↓ Export CSV</button>
+                     </div>
                     <table id="users-table">
                         <thead>
                             <tr>
