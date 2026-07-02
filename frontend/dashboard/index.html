@@ -77,8 +77,20 @@
                     </svg>
                     Groups
                 </button>
+                <button class="tab-button" onclick="showTab('mcp-tokens-tab')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 20px; height: 20px; margin-right: 8px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                    </svg>
+                    MCP Tokens
+                </button>
+                <button class="tab-button" onclick="showTab('mcp-monitoring-tab')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 20px; height: 20px; margin-right: 8px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 00-2.15-1.588H6.911a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661z" />
+                    </svg>
+                    MCP Monitoring
+                </button>
             </div>
-            
+
             <!-- Users Tab -->
             <div id="users-tab" class="tab-content active">
                 <div class="section-header">
@@ -294,7 +306,114 @@
                     </table>
                 </div>
             </div>
-            
+
+            <!-- MCP Tokens Tab -->
+            <div id="mcp-tokens-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>MCP Tokens Management</h2>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="action-button create" onclick="showCreateMcpTokenModal()">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 16px; height: 16px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Create MCP Token
+                        </button>
+                        <button class="refresh-button" onclick="loadMcpTokens()" title="Refresh Data">
+                            <span class="refresh-icon">&#x21bb;</span>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="table-controls">
+                        <h2>MCP Tokens (Remedy F1)</h2>
+                        <div class="search-pagination-wrapper">
+                            <input type="text" id="mcp-tokens-search" class="search-input" placeholder="Search MCP tokens..." onkeyup="filterMcpTokensTable()">
+                        </div>
+                    </div>
+                    <table id="mcp-tokens-table">
+                        <thead>
+                            <tr>
+                                <th>Token ID</th>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Usuario 900</th>
+                                <th>Groups</th>
+                                <th>Created</th>
+                                <th>Expires</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="9">
+                                    <div class="loading-spinner"></div>
+                                    Loading MCP tokens...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MCP Monitoring Tab -->
+            <div id="mcp-monitoring-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>MCP Monitoring (Remedy F1)</h2>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <select id="mcp-monitoring-range" onchange="loadMcpMonitoring()">
+                            <option value="24">Last 24h</option>
+                            <option value="168">Last 7 days</option>
+                            <option value="1">Last 1h</option>
+                        </select>
+                        <button class="refresh-button" onclick="loadMcpMonitoring()" title="Refresh Data">
+                            <span class="refresh-icon">&#x21bb;</span>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div class="metric-card">
+                        <h3>Total Invocations</h3>
+                        <div class="metric-value" id="mcp-total-invocations">-</div>
+                        <div class="metric-subtitle">Selected period</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Errors</h3>
+                        <div class="metric-value" id="mcp-total-errors">-</div>
+                        <div class="metric-subtitle">Failed tool calls</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Active MCP Tokens</h3>
+                        <div class="metric-value" id="mcp-active-tokens">-</div>
+                        <div class="metric-subtitle">Currently valid</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Invocations by Tool</h2>
+                    <table id="mcp-by-tool-table">
+                        <thead>
+                            <tr><th>Tool</th><th>Invocations</th></tr>
+                        </thead>
+                        <tbody><tr><td colspan="2">No data yet</td></tr></tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <h2>Invocations by User</h2>
+                    <table id="mcp-by-user-table">
+                        <thead>
+                            <tr><th>User</th><th>Invocations</th></tr>
+                        </thead>
+                        <tbody><tr><td colspan="2">No data yet</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Permissions Tab -->
             <div id="permissions-tab" class="tab-content">
                 <div class="section-header">
@@ -847,6 +966,84 @@
         </div>
     </div>
 
+    <!-- Create MCP Token Modal -->
+    <div id="create-mcp-token-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New MCP Token</h2>
+                <button class="modal-close" onclick="closeCreateMcpTokenModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="create-mcp-token-form">
+                    <div class="form-group">
+                        <label for="mcp-token-user">User *</label>
+                        <select id="mcp-token-user" required>
+                            <option value="">Select a user...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mcp-token-900">Usuario 900 de Naturgy</label>
+                        <input type="text" id="mcp-token-900" placeholder="e.g. 900123456">
+                        <small style="color: #666; font-size: 0.85rem; margin-top: 0.25rem; display: block;">
+                            Se incluirá en el token (claim naturgy_user_900). Opcional hasta que esté disponible en Cognito.
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mcp-token-groups">Grupos de Remedy</label>
+                        <select id="mcp-token-groups" multiple size="4" style="width: 100%;">
+                        </select>
+                        <small style="color: #666; font-size: 0.85rem; margin-top: 0.25rem; display: block;">
+                            Grupos a los que el usuario podrá consultar tickets. Viajan en el token (claim allowed_groups). Ctrl/Cmd+clic para varios.
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mcp-token-validity">Validity Period *</label>
+                        <select id="mcp-token-validity" required>
+                            <option value="1_day">1 Day</option>
+                            <option value="7_days">7 Days</option>
+                            <option value="30_days">30 Days</option>
+                            <option value="60_days">60 Days</option>
+                            <option value="90_days" selected>90 Days</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group checkbox">
+                        <label>
+                            <input type="checkbox" id="mcp-token-send-email">
+                            Send token via email
+                        </label>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeCreateMcpTokenModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Create MCP Token</button>
+                    </div>
+                </form>
+
+                <div id="mcp-token-result" style="display: none;">
+                    <div class="alert success">
+                        <strong>✓ MCP Token Created Successfully!</strong>
+                    </div>
+                    <div class="token-display">
+                        <label>JWT Token (paste in Cline as Bearer token):</label>
+                        <textarea id="mcp-token-jwt" readonly rows="8"></textarea>
+                        <button class="btn-copy" onclick="copyMcpToken()">Copy Token</button>
+                    </div>
+                    <div class="token-info">
+                        <p><strong>Token ID:</strong> <span id="mcp-token-id-display"></span></p>
+                        <p><strong>Expires:</strong> <span id="mcp-token-expires-display"></span></p>
+                        <p><strong>Usuario 900:</strong> <span id="mcp-token-900-display"></span></p>
+                        <p><strong>Groups:</strong> <span id="mcp-token-groups-display"></span></p>
+                    </div>
+                    <button class="btn-primary" onclick="closeCreateMcpTokenModal(); loadMcpTokens();">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- View Token Modal -->
     <div id="view-token-modal" class="modal">
         <div class="modal-content">
@@ -1248,6 +1445,7 @@
     <script src="js/permissions.js?v=20260318"></script>
     <script src="js/proxy-usage.js?v=20260312"></script>
     <script src="js/user-quotas.js?v=20260305-4"></script>
+    <script src="js/mcp-tokens.js?v=20260629"></script>
     
     <script>
         // Initialize dashboard on load

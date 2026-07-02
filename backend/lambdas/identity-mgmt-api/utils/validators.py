@@ -28,6 +28,8 @@ def validate_request(operation: str, body: Dict[str, Any]) -> Optional[str]:
         'create_token': validate_create_token,
         'revoke_token': validate_revoke_token,
         'delete_token': validate_delete_token,
+        'create_mcp_token': validate_create_mcp_token,
+        'revoke_mcp_token': validate_revoke_token,
     }
     
     validator = validators.get(operation)
@@ -100,6 +102,27 @@ def validate_create_token(body: Dict[str, Any]) -> Optional[str]:
         if validity_period not in valid_periods:
             return f'Período de validez inválido. Opciones válidas: {", ".join(valid_periods)}'
     
+    return None
+
+
+def validate_create_mcp_token(body: Dict[str, Any]) -> Optional[str]:
+    """Validar request de creación de token MCP"""
+    data = body.get('data', {})
+
+    user_id = data.get('user_id')
+    if not user_id or not user_id.strip():
+        return 'El campo "user_id" es requerido'
+
+    allowed_groups = data.get('allowed_groups')
+    if allowed_groups is not None and not isinstance(allowed_groups, list):
+        return 'El campo "allowed_groups" debe ser una lista'
+
+    validity_period = data.get('validity_period')
+    if validity_period:
+        valid_periods = ['1_minute', '1_day', '7_days', '30_days', '60_days', '90_days']
+        if validity_period not in valid_periods:
+            return f'Período de validez inválido. Opciones válidas: {", ".join(valid_periods)}'
+
     return None
 
 

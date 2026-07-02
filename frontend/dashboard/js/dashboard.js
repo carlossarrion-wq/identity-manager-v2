@@ -126,6 +126,10 @@ function showTab(tabId) {
     } else if (tabId === 'user-quotas-tab' && typeof loadUserQuotas === 'function') {
         // Load User Quotas data
         loadUserQuotas();
+    } else if (tabId === 'mcp-tokens-tab' && typeof loadMcpTokens === 'function') {
+        loadMcpTokens();
+    } else if (tabId === 'mcp-monitoring-tab' && typeof loadMcpMonitoring === 'function') {
+        loadMcpMonitoring();
     } else {
         // Load data for other tabs
         loadDashboardData();

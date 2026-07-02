@@ -26,6 +26,8 @@ from services.email_service import EmailService
 from services.permissions_service import PermissionsService
 from services.proxy_usage_service import ProxyUsageService
 from services.token_regeneration_service import TokenRegenerationService
+from services.mcp_token_service import MCPTokenService
+from services.mcp_monitoring_service import MCPMonitoringService
 from utils.validators import validate_request
 from utils.response_builder import build_response, build_error_response
 
@@ -37,12 +39,14 @@ email_service = None
 permissions_service = None
 proxy_usage_service = None
 token_regeneration_service = None
+mcp_token_service = None
+mcp_monitoring_service = None
 
 
 def initialize_services():
     """Inicializar servicios en el primer invocación (lazy loading)"""
-    global cognito_service, database_service, jwt_service, email_service, permissions_service, proxy_usage_service, token_regeneration_service
-    
+    global cognito_service, database_service, jwt_service, email_service, permissions_service, proxy_usage_service, token_regeneration_service, mcp_token_service, mcp_monitoring_service
+
     if cognito_service is None:
         cognito_service = CognitoService()
     if database_service is None:
@@ -57,6 +61,10 @@ def initialize_services():
         proxy_usage_service = ProxyUsageService(database_service)
     if token_regeneration_service is None:
         token_regeneration_service = TokenRegenerationService(database_service, cognito_service, email_service)
+    if mcp_token_service is None:
+        mcp_token_service = MCPTokenService(database_service, cognito_service, email_service)
+    if mcp_monitoring_service is None:
+        mcp_monitoring_service = MCPMonitoringService()
 
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -205,10 +213,20 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'get_proxy_usage_by_user': 10,
             'get_available_teams': 10,
             'get_user_quotas_today': 10,
-            
+
+            # Operaciones de lectura MCP - nivel 10 (read)
+            'list_mcp_tokens': 10,
+            'list_mcp_groups': 10,
+            'get_mcp_usage_summary': 10,
+            'get_mcp_usage_by_user': 10,
+            'get_mcp_recent_activity': 10,
+
             # Operaciones de escritura - nivel 50 (write)
             'create_user': 50,
             'create_token': 50,
+            'create_mcp_token': 50,
+            'revoke_mcp_token': 50,
+            'regenerate_mcp_token': 50,
             'revoke_token': 50,
             'restore_token': 50,
             'assign_app_permission': 50,
@@ -337,6 +355,18 @@ def route_operation(operation: str, body: Dict[str, Any], request_id: str) -> Di
         
         # Operaciones de reset de contraseña
         'reset_password': handle_reset_password,
+
+        # Operaciones de tokens MCP (servidor MCP de Remedy F1)
+        'list_mcp_groups': handle_list_mcp_groups,
+        'create_mcp_token': handle_create_mcp_token,
+        'list_mcp_tokens': handle_list_mcp_tokens,
+        'revoke_mcp_token': handle_revoke_mcp_token,
+        'regenerate_mcp_token': handle_regenerate_mcp_token,
+
+        # Operaciones de monitorización MCP
+        'get_mcp_usage_summary': handle_get_mcp_usage_summary,
+        'get_mcp_usage_by_user': handle_get_mcp_usage_by_user,
+        'get_mcp_recent_activity': handle_get_mcp_recent_activity,
     }
     
     handler = operations.get(operation)
@@ -1483,9 +1513,137 @@ def handle_set_admin_safe(body: Dict[str, Any], request_id: str) -> Dict[str, An
     )
     
     logger.info(f"[{request_id}] Usuario {cognito_user_id} establecido como Admin-Safe exitosamente")
-    
+
     return {
         'success': True,
         'operation': 'set_admin_safe',
         'user': result
     }
+
+
+# ============================================================================
+# HANDLERS DE OPERACIONES - TOKENS MCP (servidor MCP de Remedy F1)
+# ============================================================================
+
+# Catálogo fijo de grupos de Remedy seleccionables al crear un token MCP.
+# Se puede mover a la tabla de config en el futuro; de momento es lo más básico.
+MCP_REMEDY_GROUPS_CATALOG = [
+    'N3-SOPORTE-BMC-F1-ROD',
+]
+
+
+def handle_list_mcp_groups(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Listar el catálogo de grupos de Remedy seleccionables para tokens MCP"""
+    logger.info(f"[{request_id}] Listando catálogo de grupos MCP")
+    return {'groups': MCP_REMEDY_GROUPS_CATALOG}
+
+
+def handle_create_mcp_token(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Crear un token JWT para el servidor MCP de Remedy F1"""
+    logger.info(f"[{request_id}] Creando token MCP")
+
+    data = body.get('data', {})
+    user_id = data['user_id']
+    validity_period = data.get('validity_period', '90_days')
+    # naturgy_user_900 es enchufable: hoy llega por el formulario; cuando exista
+    # el atributo Cognito, el origen cambiará sin tocar este handler.
+    naturgy_user_900 = data.get('naturgy_user_900')
+    allowed_groups = data.get('allowed_groups', [])
+
+    result = mcp_token_service.create_token(
+        user_id=user_id,
+        naturgy_user_900=naturgy_user_900,
+        allowed_groups=allowed_groups,
+        validity_period=validity_period,
+        send_email=data.get('send_email', False)
+    )
+
+    database_service.log_audit(
+        operation_type='CREATE_MCP_TOKEN',
+        resource_type='mcp_token',
+        resource_id=result['token']['token_id'],
+        cognito_user_id=user_id,
+        cognito_email=result['token']['email'],
+        new_value={'jti': result['token']['jti'], 'user_id': user_id},
+        request_id=request_id
+    )
+
+    return result
+
+
+def handle_list_mcp_tokens(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Listar tokens MCP"""
+    logger.info(f"[{request_id}] Listando tokens MCP")
+
+    filters = body.get('filters', {})
+    pagination = body.get('pagination', {})
+    limit = pagination.get('limit') if 'limit' in pagination else None
+
+    return mcp_token_service.list_tokens(
+        user_id=filters.get('user_id'),
+        status=filters.get('status', 'all'),
+        limit=limit,
+        offset=pagination.get('offset', 0)
+    )
+
+
+def handle_revoke_mcp_token(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Revocar un token MCP"""
+    logger.info(f"[{request_id}] Revocando token MCP")
+
+    data = body.get('data', {})
+    token_id = data['token_id']
+    reason = data.get('reason', 'Revocado manualmente')
+
+    result = mcp_token_service.revoke_token(token_id, reason)
+
+    database_service.log_audit(
+        operation_type='REVOKE_MCP_TOKEN',
+        resource_type='mcp_token',
+        resource_id=token_id,
+        new_value={'reason': reason},
+        request_id=request_id
+    )
+
+    return result
+
+
+def handle_regenerate_mcp_token(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Regenerar (auto-renovar) un token MCP expirado"""
+    logger.info(f"[{request_id}] Regenerando token MCP")
+
+    data = body.get('data', {})
+    return mcp_token_service.regenerate_expired_token(
+        expired_jti=data['expired_jti'],
+        user_id=data['user_id'],
+        client_ip=data.get('client_ip'),
+        user_agent=data.get('user_agent')
+    )
+
+
+# ============================================================================
+# HANDLERS DE OPERACIONES - MONITORIZACIÓN MCP
+# ============================================================================
+
+def handle_get_mcp_usage_summary(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Resumen de uso del MCP (invocaciones, errores, por herramienta)"""
+    logger.info(f"[{request_id}] Obteniendo resumen de uso MCP")
+    hours = body.get('filters', {}).get('hours', 24)
+    return mcp_monitoring_service.get_usage_summary(hours=hours)
+
+
+def handle_get_mcp_usage_by_user(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Uso del MCP agrupado por usuario"""
+    logger.info(f"[{request_id}] Obteniendo uso MCP por usuario")
+    hours = body.get('filters', {}).get('hours', 24)
+    return mcp_monitoring_service.get_usage_by_user(hours=hours)
+
+
+def handle_get_mcp_recent_activity(body: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    """Actividad reciente del MCP"""
+    logger.info(f"[{request_id}] Obteniendo actividad reciente MCP")
+    filters = body.get('filters', {})
+    return mcp_monitoring_service.get_recent_activity(
+        hours=filters.get('hours', 24),
+        limit=filters.get('limit', 50)
+    )

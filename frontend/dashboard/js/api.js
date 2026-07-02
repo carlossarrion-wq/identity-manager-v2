@@ -226,6 +226,52 @@ class IdentityManagerAPI {
     }
 
     // ============================================================================
+    // MCP TOKENS API (servidor MCP de Remedy F1)
+    // ============================================================================
+
+    async listMcpTokens(filters = {}, pagination = {}) {
+        return await this.request('list_mcp_tokens', { filters, pagination });
+    }
+
+    async listMcpGroups() {
+        return await this.request('list_mcp_groups');
+    }
+
+    async createMcpToken(userId, naturgyUser900 = null, allowedGroups = [], validityPeriod = '90_days', sendEmail = false) {
+        return await this.request('create_mcp_token', {
+            data: {
+                user_id: userId,
+                naturgy_user_900: naturgyUser900,
+                allowed_groups: allowedGroups,
+                validity_period: validityPeriod,
+                send_email: sendEmail
+            }
+        });
+    }
+
+    async revokeMcpToken(tokenId, reason = 'Revoked from dashboard') {
+        return await this.request('revoke_mcp_token', {
+            data: { token_id: tokenId, reason }
+        });
+    }
+
+    // ============================================================================
+    // MCP MONITORING API
+    // ============================================================================
+
+    async getMcpUsageSummary(hours = 24) {
+        return await this.request('get_mcp_usage_summary', { filters: { hours } });
+    }
+
+    async getMcpUsageByUser(hours = 24) {
+        return await this.request('get_mcp_usage_by_user', { filters: { hours } });
+    }
+
+    async getMcpRecentActivity(hours = 24, limit = 50) {
+        return await this.request('get_mcp_recent_activity', { filters: { hours, limit } });
+    }
+
+    // ============================================================================
     // PROFILES API
     // ============================================================================
 

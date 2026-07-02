@@ -60,6 +60,31 @@ resource "aws_iam_role_policy" "lambda_logging" {
   })
 }
 
+# Policy para monitorización MCP (CloudWatch Logs Insights sobre el log group
+# del servicio ECS del servidor MCP de Remedy F1). Permite las consultas de la
+# pestaña de monitorización. GetQueryResults/StopQuery no aceptan recurso, por
+# eso van con "*"; StartQuery sí se acota al log group del MCP.
+resource "aws_iam_role_policy" "lambda_mcp_monitoring" {
+  name = "${var.function_name}-mcp-monitoring"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["logs:StartQuery"]
+        Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/ecs/nedgi-kb-dev-remedy-mcp:*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["logs:GetQueryResults", "logs:StopQuery"]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # Policy para VPC (si se usa)
 resource "aws_iam_role_policy" "lambda_vpc" {
   count = var.vpc_config != null ? 1 : 0
