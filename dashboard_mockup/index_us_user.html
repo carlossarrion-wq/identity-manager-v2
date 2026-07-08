@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - PDS Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #F9FAFB;
+            color: #111827;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Global Header */
+        .global-header {
+            background-color: #FFFFFF;
+            border-bottom: 1px solid #E5E7EB;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-placeholder {
+            width: 40px;
+            height: 40px;
+            background-color: #0066CC;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .role-badge {
+            background-color: #DBEAFE;
+            color: #2563EB;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background-color: #0066CC;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #111827;
+        }
+
+        /* Main Dashboard Container */
+        .dashboard-main {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        /* Page Intro Section (WGT-001) */
+        .page-intro {
+            margin-bottom: 32px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .page-context {
+            font-size: 16px;
+            color: #6B7280;
+            margin-bottom: 16px;
+        }
+
+        .context-facts {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .context-fact {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #4B5563;
+        }
+
+        .context-fact-icon {
+            width: 16px;
+            height: 16px;
+            color: #0066CC;
+        }
+
+        /* KPI Summary Zone (WGT-002) */
+        .summary-zone {
+            margin-bottom: 32px;
+        }
+
+        .zone-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 16px;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .kpi-card {
+            background-color: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+            transition: box-shadow 0.2s;
+        }
+
+        .kpi-card:hover {
+            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.12);
+        }
+
+        .kpi-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #6B7280;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .kpi-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .trend-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .trend-up {
+            background-color: #D1FAE5;
+            color: #059669;
+        }
+
+        .trend-down {
+            background-color: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .trend-neutral {
+            background-color: #F3F4F6;
+            color: #6B7280;
+        }
+
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background-color: #D1FAE5;
+            color: #059669;
+        }
+
+        .status-warning {
+            background-color: #FEF3C7;
+            color: #D97706;
+        }
+
+        .status-error {
+            background-color: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .kpi-helper {
+            color: #6B7280;
+            font-size: 12px;
+        }
+
+        /* Alerts Zone (WGT-003) */
+        .alerts-zone {
+            margin-bottom: 32px;
+        }
+
+        .alerts-panel {
+            background-color: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+        }
+
+        .alert-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            border-bottom: 1px solid #E5E7EB;
+            transition: background-color 0.2s;
+        }
+
+        .alert-row:hover {
+            background-color: #F9FAFB;
+        }
+
+        .alert-row:last-child {
+            border-bottom: none;
+        }
+
+        .alert-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .alert-critical {
+            background-color: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .alert-warning {
+            background-color: #FEF3C7;
+            color: #D97706;
+        }
+
+        .alert-info {
+            background-color: #DBEAFE;
+            color: #2563EB;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-headline {
+            font-size: 14px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+
+        .alert-description {
+            font-size: 14px;
+            color: #6B7280;
+            margin-bottom: 4px;
+        }
+
+        .alert-timestamp {
+            font-size: 12px;
+            color: #9CA3AF;
+        }
+
+        .alert-action {
+            flex-shrink: 0;
+        }
+
+        .btn-alert {
+            background-color: transparent;
+            color: #0066CC;
+            border: 1px solid #0066CC;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-alert:hover {
+            background-color: #0066CC;
+            color: #FFFFFF;
+        }
+
+        /* Actions Zone (WGT-004) */
+        .actions-zone {
+            margin-bottom: 32px;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .recommended-action-card {
+            background: linear-gradient(135deg, #0066CC 0%, #004C99 100%);
+            border-radius: 8px;
+            padding: 24px;
+            color: #FFFFFF;
+            box-shadow: 0 4px 16px 0 rgba(0, 102, 204, 0.24);
+        }
+
+        .recommended-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .recommended-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .recommended-description {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 16px;
+        }
+
+        .btn-recommended {
+            background-color: #FFFFFF;
+            color: #0066CC;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-recommended:hover {
+            background-color: #F3F4F6;
+        }
+
+        .quick-actions-list {
+            background-color: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+        }
+
+        .quick-actions-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 16px;
+        }
+
+        .action-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .action-item:hover {
+            background-color: #F9FAFB;
+        }
+
+        .action-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #111827;
+        }
+
+        .action-arrow {
+            color: #9CA3AF;
+            font-size: 18px;
+        }
+
+        /* Support Zone (WGT-005 & WGT-006) */
+        .support-zone {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .status-activity-widget,
+        .guidance-widget {
+            background-color: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+        }
+
+        .widget-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 16px;
+        }
+
+        .activity-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #F3F4F6;
+        }
+
+        .activity-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .activity-icon {
+            width: 32px;
+            height: 32px;
+            background-color: #F3F4F6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: #6B7280;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-text {
+            font-size: 14px;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+
+        .activity-timestamp {
+            font-size: 12px;
+            color: #9CA3AF;
+        }
+
+        .guidance-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #F3F4F6;
+        }
+
+        .guidance-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .guidance-icon {
+            width: 20px;
+            height: 20px;
+            color: #0066CC;
+            flex-shrink: 0;
+        }
+
+        .guidance-text {
+            font-size: 14px;
+            color: #111827;
+            line-height: 1.6;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 1024px) {
+            .dashboard-main {
+                padding: 24px;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            }
+
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .support-zone {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .global-header {
+                padding: 12px 16px;
+            }
+
+            .brand-name {
+                display: none;
+            }
+
+            .dashboard-main {
+                padding: 16px;
+            }
+
+            .page-title {
+                font-size: 24px;
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .context-facts {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .alert-row {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .alert-action {
+                width: 100%;
+            }
+
+            .btn-alert {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Global Header -->
+    <header class="global-header">
+        <div class="logo-area">
+            <div class="logo-placeholder">PDS</div>
+            <span class="brand-name">PDS Platform</span>
+        </div>
+        <div class="header-actions">
+            <span class="role-badge">Standard User</span>
+            <div class="user-profile">
+                <div class="user-avatar">JC</div>
+                <span class="user-name">Jennifer Chen</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard -->
+    <main class="dashboard-main">
+        <!-- Page Intro Section (WGT-001: Context and Orientation Widget) -->
+        <section class="page-intro">
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-context">Welcome back, Jennifer. Your account is active and you have no pending actions requiring immediate attention.</p>
+            <div class="context-facts">
+                <div class="context-fact">
+                    <svg class="context-fact-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Account Active</span>
+                </div>
+                <div class="context-fact">
+                    <svg class="context-fact-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Last updated: Today, 11:20 AM</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- KPI Summary Zone (WGT-002: KPI and Summary Widget) -->
+        <section class="summary-zone">
+            <h2 class="zone-title">Your Account Summary</h2>
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-title">Current Balance</div>
+                    <div class="kpi-value">€847.32</div>
+                    <div class="kpi-meta">
+                        <span class="status-badge status-active">Active</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Next Payment Due</div>
+                    <div class="kpi-value">Jan 20, 2026</div>
+                    <div class="kpi-meta">
+                        <span class="kpi-helper">12 days remaining</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Energy Usage This Month</div>
+                    <div class="kpi-value">385 kWh</div>
+                    <div class="kpi-meta">
+                        <span class="trend-indicator trend-down">↓ 8% vs last month</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Service Status</div>
+                    <div class="kpi-value">All Active</div>
+                    <div class="kpi-meta">
+                        <span class="kpi-helper">No issues detected</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Alerts Zone (WGT-003: Alerts and Notifications Panel) -->
+        <section class="alerts-zone">
+            <h2 class="zone-title">Notifications</h2>
+            <div class="alerts-panel">
+                <div class="alert-row">
+                    <div class="alert-icon alert-info" role="img" aria-label="Information">ⓘ</div>
+                    <div class="alert-content">
+                        <div class="alert-headline">Your January energy report is ready</div>
+                        <div class="alert-description">Review your monthly usage summary and personalized energy-saving tips.</div>
+                        <div class="alert-timestamp">Available: Today, 9:00 AM</div>
+                    </div>
+                    <div class="alert-action">
+                        <button class="btn-alert" aria-label="View energy report">View Report</button>
+                    </div>
+                </div>
+                <div class="alert-row">
+                    <div class="alert-icon alert-info" role="img" aria-label="Information">ⓘ</div>
+                    <div class="alert-content">
+                        <div class="alert-headline">Upcoming scheduled maintenance</div>
+                        <div class="alert-description">Brief service interruption planned for January 15, 2026 from 2:00 AM to 4:00 AM.</div>
+                        <div class="alert-timestamp">Posted: Yesterday, 3:15 PM</div>
+                    </div>
+                    <div class="alert-action">
+                        <button class="btn-alert" aria-label="View details about maintenance">Learn More</button>
+                    </div>
+                </div>
+                <div class="alert-row">
+                    <div class="alert-icon alert-info" role="img" aria-label="Information">ⓘ</div>
+                    <div class="alert-content">
+                        <div class="alert-headline">New feature: Smart home integration</div>
+                        <div class="alert-description">Connect your smart devices to track and optimize your energy consumption automatically.</div>
+                        <div class="alert-timestamp">Posted: 2 days ago</div>
+                    </div>
+                    <div class="alert-action">
+                        <button class="btn-alert" aria-label="Explore smart home integration">Explore</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Actions Zone (WGT-004: Quick Actions and Recommended Next Step) -->
+        <section class="actions-zone">
+            <h2 class="zone-title">Recommended Actions</h2>
+            <div class="actions-grid">
+                <div class="recommended-action-card">
+                    <div class="recommended-label">Recommended for you</div>
+                    <div class="recommended-title">Set Up Auto-Pay</div>
+                    <div class="recommended-description">Never miss a payment. Enable automatic payments to ensure your service remains uninterrupted.</div>
+                    <button class="btn-recommended" aria-label="Set up automatic payments">Get Started →</button>
+                </div>
+                <div class="quick-actions-list">
+                    <div class="quick-actions-title">Quick Actions</div>
+                    <div class="action-item" role="button" tabindex="0" aria-label="Make a payment">
+                        <span class="action-label">Make a Payment</span>
+                        <span class="action-arrow" aria-hidden="true">→</span>
+                    </div>
+                    <div class="action-item" role="button" tabindex="0" aria-label="Update contact information">
+                        <span class="action-label">Update Contact Information</span>
+                        <span class="action-arrow" aria-hidden="true">→</span>
+                    </div>
+                    <div class="action-item" role="button" tabindex="0" aria-label="View service history">
+                        <span class="action-label">View Service History</span>
+                        <span class="action-arrow" aria-hidden="true">→</span>
+                    </div>
+                    <div class="action-item" role="button" tabindex="0" aria-label="Download statements">
+                        <span class="action-label">Download Statements</span>
+                        <span class="action-arrow" aria-hidden="true">→</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Support Zone (WGT-005: Status and Recent Activity Module & WGT-006: Role-Specific Supporting Widget) -->
+        <div class="support-zone">
+            <!-- Status/Activity Widget (WGT-005) -->
+            <div class="status-activity-widget">
+                <h3 class="widget-title">Recent Activity</h3>
+                <div class="activity-row">
+                    <div class="activity-icon" aria-hidden="true">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">Payment of €92.45 processed successfully</div>
+                        <div class="activity-timestamp">January 8, 2026 at 10:32 AM</div>
+                    </div>
+                </div>
+                <div class="activity-row">
+                    <div class="activity-icon" aria-hidden="true">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">December statement available for download</div>
+                        <div class="activity-timestamp">January 5, 2026</div>
+                    </div>
+                </div>
+                <div class="activity-row">
+                    <div class="activity-icon" aria-hidden="true">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">Contact information updated</div>
+                        <div class="activity-timestamp">January 3, 2026</div>
+                    </div>
+                </div>
+                <div class="activity-row">
+                    <div class="activity-icon" aria-hidden="true">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">Energy usage alert: 5% reduction achieved</div>
+                        <div class="activity-timestamp">January 2, 2026</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guidance Widget (WGT-006) -->
+            <div class="guidance-widget">
+                <h3 class="widget-title">Help & Resources</h3>
+                <div class="guidance-item">
+                    <svg class="guidance-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                    <span class="guidance-text">Reduce your bill with smart thermostat settings and energy-efficient habits</span>
+                </div>
+                <div class="guidance-item">
+                    <svg class="guidance-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span class="guidance-text">Switch to paperless billing and access your statements anytime, anywhere</span>
+                </div>
+                <div class="guidance-item">
+                    <svg class="guidance-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <span class="guidance-text">Explore renewable energy plans to reduce your carbon footprint and support sustainability</span>
+                </div>
+                <div class="guidance-item">
+                    <svg class="guidance-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="guidance-text">Visit our Help Center for answers to common questions and step-by-step guides</span>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

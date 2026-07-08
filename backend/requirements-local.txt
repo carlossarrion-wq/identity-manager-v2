@@ -1,0 +1,9 @@
+# Local development requirements
+# Extends the Lambda requirements.txt
+
+# FastAPI for local server
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+
+# Include Lambda dependencies
+-r lambdas/identity-mgmt-api/requirements.txt

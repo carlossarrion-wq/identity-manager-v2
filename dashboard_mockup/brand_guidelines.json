@@ -1,0 +1,512 @@
+{
+  "brand": {
+    "name": "PDS Platform - UFD/Naturgy",
+    "slug": "pds-platform",
+    "description": "Design system for the PDS Main Dashboard representing UFD/Naturgy enterprise visual identity with professional, trustworthy, and operationally transparent tone",
+    "extractedFrom": "wireframe_dashboard.html",
+    "capturedAt": "2026-07-08"
+  },
+  "colors": {
+    "primary": {
+      "main": "#0066CC",
+      "dark": "#004C99",
+      "usage": ["Primary CTAs", "Brand emphasis", "Links", "Logo placeholder"]
+    },
+    "secondary": {
+      "blue100": "#DBEAFE",
+      "blue600": "#2563EB",
+      "usage": ["Role badges", "Info alerts", "Accents"]
+    },
+    "background": {
+      "page": "#F9FAFB",
+      "surface": "#FFFFFF",
+      "usage": ["Page background", "Card surfaces", "Panel backgrounds"]
+    },
+    "text": {
+      "primary": "#111827",
+      "secondary": "#6B7280",
+      "tertiary": "#4B5563",
+      "muted": "#9CA3AF",
+      "usage": ["Headings and primary text", "Labels and descriptions", "Context facts", "Timestamps and helper text"]
+    },
+    "borders": {
+      "light": "#E5E7EB",
+      "surface": "#F3F4F6",
+      "usage": ["Card borders", "Dividers", "Panel separators"]
+    },
+    "status": {
+      "success": {
+        "background": "#D1FAE5",
+        "text": "#059669",
+        "usage": ["Active status", "Success indicators", "Positive trends"]
+      },
+      "warning": {
+        "background": "#FEF3C7",
+        "text": "#D97706",
+        "usage": ["Warning alerts", "Caution indicators"]
+      },
+      "error": {
+        "background": "#FEE2E2",
+        "text": "#DC2626",
+        "usage": ["Critical alerts", "Error indicators", "Negative trends"]
+      },
+      "info": {
+        "background": "#DBEAFE",
+        "text": "#2563EB",
+        "usage": ["Info alerts", "Informational badges"]
+      },
+      "neutral": {
+        "background": "#F3F4F6",
+        "text": "#6B7280",
+        "usage": ["Neutral trends", "Secondary icons"]
+      }
+    },
+    "gradients": {
+      "primaryAction": "linear-gradient(135deg, #0066CC 0%, #004C99 100%)",
+      "usage": ["Recommended action cards", "Premium CTAs"]
+    },
+    "shadows": {
+      "card": "0 2px 8px 0 rgba(0, 0, 0, 0.08)",
+      "elevated": "0 4px 16px 0 rgba(0, 102, 204, 0.24)",
+      "usage": ["Standard cards and panels", "Elevated recommended action card"]
+    }
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      "usage": "All text content across the dashboard"
+    },
+    "scale": {
+      "h1": {
+        "fontSize": "28px",
+        "fontWeight": "700",
+        "lineHeight": "1.5",
+        "color": "#111827",
+        "usage": "Page title"
+      },
+      "h2": {
+        "fontSize": "20px",
+        "fontWeight": "600",
+        "lineHeight": "1.5",
+        "color": "#111827",
+        "usage": "Zone titles and section headers"
+      },
+      "h3": {
+        "fontSize": "16px",
+        "fontWeight": "600",
+        "lineHeight": "1.5",
+        "color": "#111827",
+        "usage": "Widget titles and subsection headers"
+      },
+      "kpiValue": {
+        "fontSize": "28px",
+        "fontWeight": "700",
+        "lineHeight": "1.5",
+        "color": "#111827",
+        "usage": "Primary KPI values"
+      },
+      "recommendedTitle": {
+        "fontSize": "20px",
+        "fontWeight": "700",
+        "lineHeight": "1.5",
+        "color": "#FFFFFF",
+        "usage": "Recommended action card title"
+      },
+      "brandName": {
+        "fontSize": "18px",
+        "fontWeight": "600",
+        "lineHeight": "1.5",
+        "color": "#111827",
+        "usage": "Brand name in header"
+      },
+      "logoText": {
+        "fontSize": "18px",
+        "fontWeight": "700",
+        "lineHeight": "1.5",
+        "color": "#FFFFFF",
+        "usage": "Logo placeholder text"
+      },
+      "bodyLarge": {
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "1.5",
+        "color": "#6B7280",
+        "usage": "Page context and descriptions"
+      },
+      "bodyMedium": {
+        "fontSize": "14px",
+        "fontWeight": "500",
+        "lineHeight": "1.5",
+        "color": "#111827",
+        "usage": "Labels, action text, activity text, user name"
+      },
+      "bodySmall": {
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "1.5",
+        "color": "#6B7280",
+        "usage": "KPI titles, alert headlines, guidance text, context facts"
+      },
+      "caption": {
+        "fontSize": "12px",
+        "fontWeight": "400",
+        "lineHeight": "1.5",
+        "color": "#9CA3AF",
+        "usage": "Timestamps, helper text, secondary metadata"
+      },
+      "badge": {
+        "fontSize": "12px",
+        "fontWeight": "600",
+        "lineHeight": "1.5",
+        "usage": "Role badges, trend indicators, status badges"
+      },
+      "badgeSmall": {
+        "fontSize": "11px",
+        "fontWeight": "600",
+        "lineHeight": "1.5",
+        "usage": "Status badges within cards"
+      },
+      "recommendedLabel": {
+        "fontSize": "11px",
+        "fontWeight": "600",
+        "lineHeight": "1.5",
+        "textTransform": "uppercase",
+        "letterSpacing": "0.05em",
+        "opacity": "0.9",
+        "color": "#FFFFFF",
+        "usage": "Recommended action label"
+      }
+    },
+    "fontWeights": {
+      "regular": "400",
+      "medium": "500",
+      "semibold": "600",
+      "bold": "700"
+    },
+    "rendering": {
+      "antialiasing": "-webkit-font-smoothing: antialiased"
+    }
+  },
+  "spacing": {
+    "scale": [4, 8, 12, 16, 20, 24, 32],
+    "semantic": {
+      "xs": "4px",
+      "sm": "8px",
+      "md": "12px",
+      "lg": "16px",
+      "xl": "20px",
+      "2xl": "24px",
+      "3xl": "32px"
+    },
+    "componentSpacing": {
+      "headerPadding": "16px 32px",
+      "headerGap": "12px 16px",
+      "mainPadding": "32px",
+      "sectionMarginBottom": "32px",
+      "cardPadding": "20px",
+      "cardGap": "16px",
+      "alertPadding": "16px",
+      "activityPadding": "12px 0",
+      "iconGap": "8px 12px"
+    }
+  },
+  "borderRadius": {
+    "values": [4, 6, 8, 50],
+    "semantic": {
+      "small": "4px",
+      "medium": "6px",
+      "large": "8px",
+      "circle": "50%"
+    },
+    "usage": {
+      "badge": "4px",
+      "button": "6px",
+      "card": "8px",
+      "logoPlaceholder": "8px",
+      "avatar": "50%",
+      "alertIcon": "50%"
+    }
+  },
+  "components": {
+    "card": {
+      "backgroundColor": "#FFFFFF",
+      "border": "1px solid #E5E7EB",
+      "borderRadius": "8px",
+      "padding": "20px",
+      "boxShadow": "0 2px 8px 0 rgba(0, 0, 0, 0.08)"
+    },
+    "button": {
+      "primary": {
+        "backgroundColor": "#0066CC",
+        "color": "#FFFFFF",
+        "border": "none",
+        "borderRadius": "6px",
+        "padding": "10px 20px",
+        "fontSize": "14px",
+        "fontWeight": "600",
+        "transition": "all 0.2s"
+      },
+      "outlined": {
+        "backgroundColor": "transparent",
+        "color": "#0066CC",
+        "border": "1px solid #0066CC",
+        "borderRadius": "6px",
+        "padding": "6px 12px",
+        "fontSize": "12px",
+        "fontWeight": "600",
+        "transition": "all 0.2s"
+      },
+      "white": {
+        "backgroundColor": "#FFFFFF",
+        "color": "#0066CC",
+        "border": "none",
+        "borderRadius": "6px",
+        "padding": "10px 20px",
+        "fontSize": "14px",
+        "fontWeight": "600",
+        "transition": "all 0.2s"
+      }
+    },
+    "badge": {
+      "role": {
+        "backgroundColor": "#DBEAFE",
+        "color": "#2563EB",
+        "padding": "4px 12px",
+        "borderRadius": "4px",
+        "fontSize": "12px",
+        "fontWeight": "600"
+      },
+      "statusActive": {
+        "backgroundColor": "#D1FAE5",
+        "color": "#059669",
+        "padding": "2px 8px",
+        "borderRadius": "4px",
+        "fontSize": "11px",
+        "fontWeight": "600"
+      },
+      "statusWarning": {
+        "backgroundColor": "#FEF3C7",
+        "color": "#D97706",
+        "padding": "2px 8px",
+        "borderRadius": "4px",
+        "fontSize": "11px",
+        "fontWeight": "600"
+      },
+      "statusError": {
+        "backgroundColor": "#FEE2E2",
+        "color": "#DC2626",
+        "padding": "2px 8px",
+        "borderRadius": "4px",
+        "fontSize": "11px",
+        "fontWeight": "600"
+      },
+      "trendUp": {
+        "backgroundColor": "#D1FAE5",
+        "color": "#059669",
+        "padding": "2px 8px",
+        "borderRadius": "4px",
+        "fontSize": "12px",
+        "fontWeight": "600"
+      },
+      "trendDown": {
+        "backgroundColor": "#FEE2E2",
+        "color": "#DC2626",
+        "padding": "2px 8px",
+        "borderRadius": "4px",
+        "fontSize": "12px",
+        "fontWeight": "600"
+      },
+      "trendNeutral": {
+        "backgroundColor": "#F3F4F6",
+        "color": "#6B7280",
+        "padding": "2px 8px",
+        "borderRadius": "4px",
+        "fontSize": "12px",
+        "fontWeight": "600"
+      }
+    },
+    "alert": {
+      "row": {
+        "display": "flex",
+        "alignItems": "flex-start",
+        "gap": "12px",
+        "padding": "16px",
+        "borderBottom": "1px solid #E5E7EB"
+      },
+      "icon": {
+        "width": "24px",
+        "height": "24px",
+        "borderRadius": "50%",
+        "fontWeight": "700",
+        "fontSize": "14px"
+      },
+      "critical": {
+        "backgroundColor": "#FEE2E2",
+        "color": "#DC2626"
+      },
+      "warning": {
+        "backgroundColor": "#FEF3C7",
+        "color": "#D97706"
+      },
+      "info": {
+        "backgroundColor": "#DBEAFE",
+        "color": "#2563EB"
+      }
+    },
+    "recommendedActionCard": {
+      "background": "linear-gradient(135deg, #0066CC 0%, #004C99 100%)",
+      "borderRadius": "8px",
+      "padding": "24px",
+      "color": "#FFFFFF",
+      "boxShadow": "0 4px 16px 0 rgba(0, 102, 204, 0.24)"
+    },
+    "avatar": {
+      "width": "32px",
+      "height": "32px",
+      "backgroundColor": "#0066CC",
+      "borderRadius": "50%",
+      "color": "#FFFFFF",
+      "fontWeight": "600",
+      "fontSize": "14px"
+    },
+    "logoPlaceholder": {
+      "width": "40px",
+      "height": "40px",
+      "backgroundColor": "#0066CC",
+      "borderRadius": "8px",
+      "color": "#FFFFFF",
+      "fontWeight": "700",
+      "fontSize": "18px"
+    },
+    "activityIcon": {
+      "width": "32px",
+      "height": "32px",
+      "backgroundColor": "#F3F4F6",
+      "borderRadius": "50%"
+    },
+    "contextFactIcon": {
+      "width": "16px",
+      "height": "16px",
+      "color": "#0066CC"
+    },
+    "guidanceIcon": {
+      "width": "20px",
+      "height": "20px",
+      "color": "#0066CC"
+    }
+  },
+  "layout": {
+    "maxWidth": "1440px",
+    "zones": [
+      {
+        "name": "Global Header",
+        "description": "Top-level navigation and authentication context",
+        "backgroundColor": "#FFFFFF",
+        "borderBottom": "1px solid #E5E7EB",
+        "padding": "16px 32px"
+      },
+      {
+        "name": "Page Context Region",
+        "description": "Page title, contextual greeting, and orientation facts",
+        "marginBottom": "32px"
+      },
+      {
+        "name": "KPI Summary Zone",
+        "description": "Grid of summary cards with metrics and status indicators",
+        "marginBottom": "32px"
+      },
+      {
+        "name": "Alerts Zone",
+        "description": "Urgency-ordered alert rows with actions",
+        "marginBottom": "32px"
+      },
+      {
+        "name": "Actions Zone",
+        "description": "Recommended action card and quick actions list",
+        "marginBottom": "32px"
+      },
+      {
+        "name": "Support Zone",
+        "description": "Recent activity and guidance/tips widgets",
+        "marginBottom": "32px"
+      }
+    ],
+    "grid": {
+      "kpiGrid": "repeat(auto-fit, minmax(280px, 1fr))",
+      "actionsGrid": "1fr 1fr",
+      "supportGrid": "1fr 1fr",
+      "gap": "16px"
+    }
+  },
+  "breakpoints": {
+    "desktop": {
+      "minWidth": "1440px",
+      "description": "Primary desktop layout with full multi-column composition",
+      "layout": "Multi-column KPI grid, side-by-side action/support zones"
+    },
+    "tablet": {
+      "maxWidth": "1024px",
+      "description": "Tablet and laptop layout with reduced columns",
+      "adjustments": {
+        "mainPadding": "24px",
+        "kpiGrid": "repeat(auto-fit, minmax(240px, 1fr))",
+        "actionsGrid": "1fr",
+        "supportGrid": "1fr"
+      }
+    },
+    "mobile": {
+      "maxWidth": "768px",
+      "description": "Mobile layout with vertical stacking",
+      "adjustments": {
+        "headerPadding": "12px 16px",
+        "mainPadding": "16px",
+        "pageTitle": "24px",
+        "kpiGrid": "1fr",
+        "contextFacts": "column"
+      }
+    }
+  },
+  "themes": {
+    "light": {
+      "mode": "light",
+      "description": "Primary light theme for UFD/Naturgy dashboard",
+      "characteristics": [
+        "Clean white surface backgrounds",
+        "Subtle gray borders and dividers",
+        "High contrast for readability",
+        "Restrained color usage reinforcing hierarchy",
+        "Status colors paired with text labels"
+      ]
+    }
+  },
+  "accessibility": {
+    "wcagLevel": "AA",
+    "standards": "WCAG 2.2",
+    "contrastRequirements": {
+      "normalText": "4.5:1",
+      "largeText": "3:1",
+      "uiComponents": "3:1"
+    },
+    "semanticHTML": [
+      "header landmark",
+      "main landmark",
+      "section landmarks",
+      "Logical heading hierarchy (h1 > h2 > h3)"
+    ],
+    "keyboardNavigation": "All interactive controls keyboard-reachable in logical order",
+    "statusCommunication": "Status and alert information includes text labels or iconography in addition to color coding"
+  },
+  "designPrinciples": {
+    "visualTone": [
+      "Professional",
+      "Trustworthy",
+      "Operationally transparent",
+      "Modern enterprise polish",
+      "Calm control"
+    ],
+    "colorUsage": "Restrained use of color to reinforce hierarchy and emphasis without excessive saturation",
+    "layoutApproach": "Structured spacing and breathing room, avoiding cluttered composition",
+    "typographyHierarchy": "Clear distinction among page title, section headers, widget titles, metric values, labels, and helper text",
+    "componentConsistency": "Consistent card/panel patterns, containment, and internal hierarchy"
+  }
+}

@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - PDS Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #F9FAFB;
+            color: #111827;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Global Header */
+        .global-header {
+            background-color: #FFFFFF;
+            border-bottom: 1px solid #E5E7EB;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-placeholder {
+            width: 40px;
+            height: 40px;
+            background-color: #0066CC;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .role-badge {
+            background-color: #FEF3C7;
+            color: #D97706;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background-color: #0066CC;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #111827;
+        }
+
+        /* Main Dashboard Container */
+        .dashboard-main {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        /* Page Intro Section (WGT-001) */
+        .page-intro {
+            margin-bottom: 32px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .page-context {
+            font-size: 16px;
+            color: #6B7280;
+            margin-bottom: 16px;
+        }
+
+        .context-facts {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .context-fact {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #4B5563;
+        }
+
+        .context-fact-icon {
+            width: 16px;
+            height: 16px;
+            color: #0066CC;
+        }
+
+        /* KPI Summary Zone (WGT-002) */
+        .summary-zone {
+            margin-bottom: 32px;
+        }
+
+        .zone-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 16px;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+        }
+
+        .kpi-card {
+            background-color: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+            transition: box-shadow 0.2s;
+        }
+
+        .kpi-card:hover {
+            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.12);
+        }
+
+        .kpi-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: #6B7280;
+            margin-bottom: 6px;
+        }
+
+        .kpi-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 6px;
+        }
+
+        .kpi-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            flex-wrap: wrap;
+        }
+
+        .trend-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .trend-up {
+            background-color: #D1FAE5;
+            color: #059669;
+        }
+
+        .trend-down {
+            background-color: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .trend-neutral {
+            background-color: #F3F4F6;
+            color: #6B7280;
+        }
+
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background-color: #D1FAE5;
+            color: #059669;
+        }
+
+        .status-warning {
+            background-color: #FEF3C7;
+            color: #D97706;
+        }
+
+        .status-error {
+            background-color: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .kpi-helper {
+            color: #6B7280;
+            font-size: 11px;
+        }
+
+        /* Alerts Zone (WGT-003) */
+        .alerts-zone {
+            margin-bottom: 32px;
+        }
+
+        .alerts-panel {
+            background-color: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+        }
+
+        .alert-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            border-bottom: 1px solid #E5E7EB;
+            transition: background-color 0.2s;
+        }
+
+        .alert-row:hover {
+            background-color: #F9FAFB;
+        }
+
+        .alert-row:last-child {
+            border-bottom: none;
+        }
+
+        .alert-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .alert-critical {
+            background-color: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .alert-warning {
+            background-color: #FEF3C7;
+            color: #D97706;
+        }
+
+        .alert-info {
+            background-color: #DBEAFE;
+            color: #2563EB;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-headline {
+            font-size: 14px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+
+        .alert-description {
+            font-size: 13px;
+            color: #6B7280;
+            margin-bottom: 4px;
+        }
+
+        .alert-timestamp {
+            font-size: 12px;
+            color: #9CA3AF;
+        }
+
+        .alert-action {
+            flex-shrink: 0;
+        }
+
+        .btn-alert {
+            background-color: transparent;
+            color: #0066CC;
+            border: 1px solid #0066CC;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-alert:hover {
+            background-color: #0066CC;
+            color: #FFFFFF;
+        }
+
+        .btn-alert-critical {
+            background-color: transparent;
+            color: #DC2626;
+            border: 1px solid #DC2626;
+        }
+
+        .btn-alert-critical:hover {
+            background-color: #DC2626;
+            color: #FFFFFF;
+        }
+
+        /* Actions Zone (WGT-004) */
+        .actions-zone {
+            margin-bottom: 32px;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .recommended-action-card {
+            background: linear-gradient(135deg, #0066CC 0%, #004C99 100%);
+            border-radius: 8px;
+            padding: 24px;
+            color: #FFFFFF;
+            box-shadow: 0 4px 16px 0 rgba(0, 102, 204, 0.24);
+        }
+
+        .recommended-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .recommended-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .recommended-description {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 16px;
+        }
+
+        .btn-recommended {
+            background-color: #FFFFFF;
+            color: #0066CC;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-recommended:hover {
+            background-color: #F3F4F6;
+        }
+
+        .quick-actions-list {
+            background-color: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+        }
+
+        .quick-actions-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 16px;
+        }
+
+        .action-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .action-item:hover {
+            background-color: #F9FAFB;
+        }
+
+        .action-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #111827;
+        }
+
+        .action-arrow {
+            color: #9CA3AF;
+            font-size: 18px;
+        }
+
+        /* Support Zone (WGT-005 & WGT-006) */
+        .support-zone {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .status-activity-widget,
+        .guidance-widget {
+            background-color: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+        }
+
+        .widget-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 16px;
+        }
+
+        .activity-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #F3F4F6;
+        }
+
+        .activity-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .activity-icon {
+            width: 32px;
+            height: 32px;
+            background-color: #F3F4F6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: #6B7280;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-text {
+            font-size: 13px;
+            color: #111827;
+            margin-bottom: 2px;
+        }
+
+        .activity-timestamp {
+            font-size: 11px;
+            color: #9CA3AF;
+        }
+
+        .guidance-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #F3F4F6;
+        }
+
+        .guidance-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .guidance-icon {
+            width: 20px;
+            height: 20px;
+            color: #0066CC;
+            flex-shrink: 0;
+        }
+
+        .guidance-text {
+            font-size: 13px;
+            color: #111827;
+            line-height: 1.5;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 1024px) {
+            .dashboard-main {
+                padding: 24px;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .support-zone {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .global-header {
+                padding: 12px 16px;
+            }
+
+            .brand-name {
+                display: none;
+            }
+
+            .dashboard-main {
+                padding: 16px;
+            }
+
+            .page-title {
+                font-size: 24px;
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .context-facts {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .alert-row {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .alert-action {
+                width: 100%;
+            }
+
+            .btn-alert,
+            .btn-alert-critical {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Global Header -->
+    <header class="global-header">
+        <div class="logo-area">
+            <div class="logo-placeholder">PDS</div>
+            <span class="brand-name">PDS Platform</span>
+        </div>
+        <div class="header-actions">
+            <span class="role-badge">Customer Care</span>
+            <div class="user-profile">
+                <div class="user-avatar">MR</div>
+                <span class="user-name">Marcus Rivera</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard -->
+    <main class="dashboard-main">
+        <!-- Page Intro Section (WGT-001: Context and Orientation Widget) -->
+        <section class="page-intro">
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-context">Support operations dashboard for Marcus Rivera. Currently 8 tickets requiring attention and 2 escalated items awaiting intervention.</p>
+            <div class="context-facts">
+                <div class="context-fact">
+                    <svg class="context-fact-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Shift: 08:00 - 16:00</span>
+                </div>
+                <div class="context-fact">
+                    <svg class="context-fact-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <span>Team: Customer Support - Tier 2</span>
+                </div>
+                <div class="context-fact">
+                    <svg class="context-fact-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Last updated: Today, 11:35 AM</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- KPI Summary Zone (WGT-002: KPI and Summary Widget) -->
+        <section class="summary-zone">
+            <h2 class="zone-title">Operational Summary</h2>
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-title">Open Tickets</div>
+                    <div class="kpi-value">47</div>
+                    <div class="kpi-meta">
+                        <span class="status-badge status-warning">8 Urgent</span>
+                        <span class="kpi-helper">+5 in last hour</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">SLA Compliance</div>
+                    <div class="kpi-value">94.2%</div>
+                    <div class="kpi-meta">
+                        <span class="trend-indicator trend-up">↑ 2.1%</span>
+                        <span class="kpi-helper">vs last week</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Queue Depth</div>
+                    <div class="kpi-value">23</div>
+                    <div class="kpi-meta">
+                        <span class="status-badge status-active">Normal</span>
+                        <span class="kpi-helper">Avg wait: 8m</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">System Status</div>
+                    <div class="kpi-value">All OK</div>
+                    <div class="kpi-meta">
+                        <span class="status-badge status-active">Operational</span>
+                        <span class="kpi-helper">99.8% uptime</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Escalations</div>
+                    <div class="kpi-value">2</div>
+                    <div class="kpi-meta">
+                        <span class="status-badge status-error">Needs Action</span>
+                        <span class="kpi-helper">Both critical</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Avg Response Time</div>
+                    <div class="kpi-value">4m 12s</div>
+                    <div class="kpi-meta">
+                        <span class="trend-indicator trend-down">↓ 18s</span>
+                        <span class="kpi-helper">vs yesterday</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Alerts Zone (WGT-003: Alerts and Notifications Panel) -->
+        <section class="alerts-zone">
+            <h2 class="zone-title">Priority Alerts</h2>
+            <div class="alerts-panel">
+                <div class="alert-row">
+                    <div class="alert-icon alert-critical" role="img" aria-label="Critical">!</div>
+                    <div class="alert-content">
+                        <div class="alert-headline">Critical: Payment gateway timeout affecting 12 customers</div>
+                        <div class="alert-description">Multiple payment failures reported. Gateway response time exceeding 30 seconds. Immediate intervention required.</div>
+                        <div class="alert-timestamp">Detected: 8 minutes ago</div>
+                    </div>
+                    <div class="alert-action">
+                        <button class="btn-alert btn-alert-critical" aria-label="Investigate payment gateway issue">Investigate</button>
+                    </div>
+                </div>
+                <div class="alert-row">
+                    <div class="alert-icon alert-critical" role="img" aria-label="Critical">!</div>
+                    <div class="alert-content">
+                        <div class="alert-headline">Escalated ticket #8847 requires manager approval</div>
+                        <div class="alert-description">Customer refund request exceeds agent authority limit. Account: Jennifer Chen (ID: 40392). Amount: €1,247.50.</div>
+                        <div class="alert-timestamp">Escalated: 22 minutes ago</div>
+                    </div>
+                    <div class="alert-action">
+                        <button class="btn-alert btn-alert-critical" aria-label="Review escalated ticket">Review</button>
+                    </div>
+                </div>
+                <div class="alert-row">
+                    <div class="alert-icon alert-warning" role="img" aria-label="Warning">⚠</div>
+                    <div class="alert-content">
+                        <div class="alert-headline">5 tickets approaching SLA deadline</div>
+                        <div class="alert-description">Tickets will breach SLA in next 45 minutes. Priority queue requires immediate attention to maintain compliance target.</div>
+                        <div class="alert-timestamp">Updated: 3 minutes ago</div>
+                    </div>
+                    <div class="alert-action">
+                        <button class="btn-alert" aria-label="View tickets approaching deadline">View Queue</button>
+                    </div>
+                </div>
+                <div class="alert-row">
+                    <div class="alert-icon alert-warning" role="img" aria-label="Warning">⚠</div>
+                    <div class="alert-content">
+                        <div class="alert-headline">Unusual support volume spike detected</div>
+                        <div class="alert-description">Ticket creation rate increased 35% in last 30 minutes. Possible service disruption or outage causing customer impact.</div>
+                        <div class="alert-timestamp">Detected: 12 minutes ago</div>
+                    </div>
+                    <div class="alert-action">
+                        <button class="btn-alert" aria-label="View ticket volume analysis">Analyze</button>
+                    </div>
+                </div>
+                <div class="alert-row">
+                    <div class="alert-icon alert-info" role="img" aria-label="Information">ⓘ</div>
+                    <div class="alert-content">
+                        <div class="alert-headline">Scheduled system maintenance reminder</div>
+                        <div class="alert-description">Billing system maintenance window begins tonight at 10:00 PM. Customer-facing services remain operational. Duration: 2 hours.</div>
+                        <div class="alert-timestamp">Scheduled: Today, 10:00 PM</div>
+                    </div>
+                    <div class="alert-action">
+                        <button class="btn-alert" aria-label="View maintenance details">Details</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Actions Zone (WGT-004: Quick Actions and Recommended Next Step) -->
+        <section class="actions-zone">
+            <h2 class="zone-title">Operational Actions</h2>
+            <div class="actions-grid">
+                <div class="recommended-action-card">
+                    <div class="recommended-label">Priority Action</div>
+                    <div class="recommended-title">Review Pending Tickets</div>
+                    <div class="recommended-description">8 urgent tickets awaiting assignment. Address high-priority customer issues before SLA breach.</div>
+                    <button class="btn-recommended" aria-label="Access pending ticket queue">Access Queue →</button>
+                </div>
+                <div class="quick-actions-list">
+                    <div class="quick-actions-title">Quick Interventions</div>
+                    <div class="action-item" role="button" tabindex="0" aria-label="Process escalations">
+                        <span class="action-label">Process Escalations</span>
+                        <span class="action-arrow" aria-hidden="true">→</span>
+                    </div>
+                    <div class="action-item" role="button" tabindex="0" aria-label="View customer accounts">
+                        <span class="action-label">View Customer Accounts</span>
+                        <span class="action-arrow" aria-hidden="true">→</span>
+                    </div>
+                    <div class="action-item" role="button" tabindex="0" aria-label="Access operational tools">
+                        <span class="action-label">Access Operational Tools</span>
+                        <span class="action-arrow" aria-hidden="true">→</span>
+                    </div>
+                    <div class="action-item" role="button" tabindex="0" aria-label="View team performance">
+                        <span class="action-label">View Team Performance</span>
+                        <span class="action-arrow" aria-hidden="true">→</span>
+                    </div>
+                    <div class="action-item" role="button" tabindex="0" aria-label="Generate shift report">
+                        <span class="action-label">Generate Shift Report</span>
+                        <span class="action-arrow" aria-hidden="true">→</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Support Zone (WGT-005: Status and Recent Activity Module & WGT-006: Role-Specific Supporting Widget) -->
+        <div class="support-zone">
+            <!-- Status/Activity Widget (WGT-005) -->
+            <div class="status-activity-widget">
+                <h3 class="widget-title">Recent Operational Activity</h3>
+                <div class="activity-row">
+                    <div class="activity-icon" aria-hidden="true">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">Ticket #8832 resolved by Sarah Kim - Customer billing dispute</div>
+                        <div class="activity-timestamp">3 minutes ago</div>
+                    </div>
+                </div>
+                <div class="activity-row">
+                    <div class="activity-icon" aria-hidden="true">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">System alert: API response time spike on payment endpoint</div>
+                        <div class="activity-timestamp">8 minutes ago</div>
+                    </div>
+                </div>
+                <div class="activity-row">
+                    <div class="activity-icon" aria-hidden="true">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                        </svg>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">Ticket #8821 escalated to Tier 3 - Technical account issue</div>
+                        <div class="activity-timestamp">14 minutes ago</div>
+                    </div>
+                </div>
+                <div class="activity-row">
+                    <div class="activity-icon" aria-hidden="true">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">Team shift change: 4 agents now active on support queue</div>
+                        <div class="activity-timestamp">22 minutes ago</div>
+                    </div>
+                </div>
+                <div class="activity-row">
+                    <div class="activity-icon" aria-hidden="true">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">Bulk password reset completed for 23 customer accounts</div>
+                        <div class="activity-timestamp">28 minutes ago</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Operational Support Widget (WGT-006) -->
+            <div class="guidance-widget">
+                <h3 class="widget-title">Operational Resources</h3>
+                <div class="guidance-item">
+                    <svg class="guidance-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                    </svg>
+                    <span class="guidance-text">Access ticket queue management dashboard for real-time workload distribution</span>
+                </div>
+                <div class="guidance-item">
+                    <svg class="guidance-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span class="guidance-text">Review knowledge base articles for common customer issues and resolution paths</span>
+                </div>
+                <div class="guidance-item">
+                    <svg class="guidance-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                    </svg>
+                    <span class="guidance-text">Monitor system health dashboard for service status and performance metrics</span>
+                </div>
+                <div class="guidance-item">
+                    <svg class="guidance-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    <span class="guidance-text">View team notifications and internal announcements from support management</span>
+                </div>
+                <div class="guidance-item">
+                    <svg class="guidance-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="guidance-text">Access escalation guidelines and manager contact procedures for urgent issues</span>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
