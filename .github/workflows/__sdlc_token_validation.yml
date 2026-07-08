@@ -1,0 +1,8 @@
+name: Token Validation
+on:
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo token validation
