@@ -18,11 +18,19 @@ class CognitoService:
     
     def __init__(self):
         """Inicializar cliente de Cognito"""
-        self.client = boto3.client('cognito-idp', region_name=os.environ.get('AWS_REGION', 'eu-west-1'))
         self.user_pool_id = os.environ.get('COGNITO_USER_POOL_ID')
         
         if not self.user_pool_id:
             raise ValueError('COGNITO_USER_POOL_ID no está configurado')
+        
+        # Check if in local development mode
+        self.is_local = os.environ.get('ENVIRONMENT') == 'local-development' or os.environ.get('DB_TYPE') == 'sqlite'
+        
+        if self.is_local:
+            logger.info("🔧 Local development mode - Cognito calls will be mocked")
+            self.client = None
+        else:
+            self.client = boto3.client('cognito-idp', region_name=os.environ.get('AWS_REGION', 'eu-west-1'))
     
     def list_users(
         self,
@@ -45,6 +53,22 @@ class CognitoService:
         Returns:
             Dict con lista de usuarios y token de paginación
         """
+        # Mock response for local development
+        if self.is_local:
+            return {
+                'users': [{
+                    'id': 'test-cognito-admin',
+                    'username': 'admin',
+                    'email': 'admin@test.com',
+                    'status': 'CONFIRMED',
+                    'enabled': True,
+                    'groups': ['admin-group'],
+                    'created_at': '2024-01-01T00:00:00Z'
+                }],
+                'count': 1,
+                'pagination_token': None
+            }
+        
         try:
             all_users_data = []
             next_token = pagination_token
@@ -120,6 +144,19 @@ class CognitoService:
         Returns:
             Dict con información del usuario
         """
+        # Mock response for local development
+        if self.is_local:
+            return {
+                'id': 'test-cognito-admin',
+                'username': 'admin',
+                'email': 'admin@test.com',
+                'person': 'Admin User',
+                'status': 'CONFIRMED',
+                'enabled': True,
+                'groups': ['admin-group'],
+                'created_at': '2024-01-01T00:00:00Z'
+            }
+        
         try:
             response = self.client.admin_get_user(
                 UserPoolId=self.user_pool_id,

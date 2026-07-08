@@ -3,25 +3,30 @@ Database Service
 ================
 Servicio para interactuar con PostgreSQL RDS
 Implementa Connection Pool Singleton optimizado para Lambda
+Soporta SQLite para desarrollo local
 """
 
 import boto3
 import json
 import logging
 import os
-import psycopg2
-from psycopg2 import pool
-from psycopg2.extras import RealDictCursor
+import sqlite3
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from contextlib import contextmanager
+
+# Import PostgreSQL only if not in local mode
+if os.environ.get('DB_TYPE') != 'sqlite':
+    import psycopg2
+    from psycopg2 import pool
+    from psycopg2.extras import RealDictCursor
 
 logger = logging.getLogger()
 
 
 class DatabaseService:
     """
-    Servicio para gestión de base de datos PostgreSQL
+    Servicio para gestión de base de datos PostgreSQL/SQLite
     Implementa Connection Pool Singleton optimizado para AWS Lambda
     Similar al patrón usado en Gestión Demanda (Node.js con pg)
     """
@@ -29,6 +34,12 @@ class DatabaseService:
     # Singleton: Pool compartido entre invocaciones del mismo contenedor Lambda
     _pool = None
     _secrets_cache = None
+    _sqlite_conn = None
+    
+    @classmethod
+    def is_local_mode(cls) -> bool:
+        """Check if running in local development mode with SQLite"""
+        return os.environ.get('DB_TYPE') == 'sqlite' or os.environ.get('ENVIRONMENT') == 'local-development'
     
     @classmethod
     def _get_db_credentials(cls) -> Dict[str, str]:
@@ -60,14 +71,29 @@ class DatabaseService:
             raise Exception(f"Error accediendo a Secrets Manager: {str(e)}")
     
     @classmethod
+    def get_sqlite_connection(cls):
+        """Get or create SQLite connection for local development"""
+        if cls._sqlite_conn is None:
+            db_path = os.environ.get('DB_PATH', 'identity_manager.db')
+            logger.info(f"Creating SQLite connection to {db_path}")
+            cls._sqlite_conn = sqlite3.connect(db_path, check_same_thread=False)
+            cls._sqlite_conn.row_factory = sqlite3.Row
+        return cls._sqlite_conn
+    
+    @classmethod
     def get_pool(cls):
         """
         Obtener o crear Connection Pool Singleton
         Optimizado para Lambda: 1 conexión por contenedor
         
         Returns:
-            Connection pool de psycopg2
+            Connection pool de psycopg2 o SQLite connection
         """
+        # Use SQLite in local mode
+        if cls.is_local_mode():
+            logger.info("Local mode detected, using SQLite")
+            return cls.get_sqlite_connection()
+        
         if cls._pool is None:
             logger.info("Pool no existe, creando nuevo pool...")
             creds = cls._get_db_credentials()
@@ -104,23 +130,35 @@ class DatabaseService:
         Maneja automáticamente commit/rollback y liberación de conexión
         
         Yields:
-            Conexión a PostgreSQL del pool
+            Conexión a PostgreSQL/SQLite del pool
         """
-        pool_instance = cls.get_pool()
-        conn = None
-        
-        try:
-            conn = pool_instance.getconn()
-            yield conn
-            conn.commit()
-        except Exception as e:
-            if conn:
+        if cls.is_local_mode():
+            # SQLite connection
+            conn = cls.get_pool()
+            try:
+                yield conn
+                conn.commit()
+            except Exception as e:
                 conn.rollback()
-            logger.error(f"Error de base de datos: {e}")
-            raise Exception(f"Error de base de datos: {str(e)}")
-        finally:
-            if conn:
-                pool_instance.putconn(conn)
+                logger.error(f"Error de base de datos SQLite: {e}")
+                raise Exception(f"Error de base de datos: {str(e)}")
+        else:
+            # PostgreSQL connection pool
+            pool_instance = cls.get_pool()
+            conn = None
+            
+            try:
+                conn = pool_instance.getconn()
+                yield conn
+                conn.commit()
+            except Exception as e:
+                if conn:
+                    conn.rollback()
+                logger.error(f"Error de base de datos: {e}")
+                raise Exception(f"Error de base de datos: {str(e)}")
+            finally:
+                if conn:
+                    pool_instance.putconn(conn)
     
     @classmethod
     def execute_query(cls, query: str, params: tuple = None) -> List[Dict[str, Any]]:
@@ -134,11 +172,24 @@ class DatabaseService:
         Returns:
             Lista de diccionarios con resultados
         """
+        # Convert PostgreSQL placeholders %s to SQLite ? if needed
+        if cls.is_local_mode() and params:
+            query = query.replace('%s', '?')
+        
         with cls.get_connection() as conn:
-            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            if cls.is_local_mode():
+                # SQLite cursor
+                cursor = conn.cursor()
                 cursor.execute(query, params or ())
                 results = cursor.fetchall()
+                cursor.close()
                 return [dict(row) for row in results]
+            else:
+                # PostgreSQL cursor
+                with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                    cursor.execute(query, params or ())
+                    results = cursor.fetchall()
+                    return [dict(row) for row in results]
     
     @classmethod
     def execute_update(cls, query: str, params: tuple = None) -> int:
@@ -152,10 +203,16 @@ class DatabaseService:
         Returns:
             Número de filas afectadas
         """
+        # Convert PostgreSQL placeholders %s to SQLite ? if needed
+        if cls.is_local_mode() and params:
+            query = query.replace('%s', '?')
+        
         with cls.get_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(query, params or ())
-                return cursor.rowcount
+            cursor = conn.cursor()
+            cursor.execute(query, params or ())
+            rowcount = cursor.rowcount
+            cursor.close()
+            return rowcount
     
     def __init__(self):
         """

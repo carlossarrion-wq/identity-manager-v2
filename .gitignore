@@ -74,3 +74,8 @@ deployment/terraform/lambda-packages/*.zip
 
 # OS
 Thumbs.db
+
+# Auto-added by pipeline
+.venv/
+*.pyc
+package-lock.json
